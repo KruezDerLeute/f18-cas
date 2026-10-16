@@ -1,0 +1,70 @@
+[gd_scene format=3 uid="uid://bki6f7ji164ot"]
+
+[ext_resource type="Script" uid="uid://b1h2pkv23714w" path="res://scripts/Game.cs" id="1_game"]
+[ext_resource type="PackedScene" path="res://scenes/world.tscn" id="2_world"]
+[ext_resource type="PackedScene" path="res://scenes/jet.tscn" id="3_jet"]
+[ext_resource type="PackedScene" path="res://scenes/units/m1a2.tscn" id="4_m1a2"]
+[ext_resource type="PackedScene" path="res://scenes/units/t72.tscn" id="5_t72"]
+[ext_resource type="PackedScene" path="res://scenes/units/truck.tscn" id="6_truck"]
+[ext_resource type="PackedScene" path="res://scenes/units/zsu23.tscn" id="7_zsu23"]
+[ext_resource type="PackedScene" path="res://scenes/units/sa8.tscn" id="8_sa8"]
+[ext_resource type="PackedScene" path="res://scenes/weapons/maverick.tscn" id="9_maverick"]
+[ext_resource type="PackedScene" path="res://scenes/weapons/sam_missile.tscn" id="10_sam"]
+[ext_resource type="PackedScene" uid="uid://bmgebu8ae7htp" path="res://assets/models/mk82.glb" id="11_mk82"]
+[ext_resource type="Texture2D" uid="uid://c0ea2j6wir41t" path="res://assets/textures/particle_hard.png" id="12_hard"]
+[ext_resource type="Texture2D" uid="uid://bxwbdwu2j3vk4" path="res://assets/textures/particle_soft.png" id="13_soft"]
+[ext_resource type="Script" uid="uid://te7evf4ltli1" path="res://scripts/Audio.cs" id="14_audio"]
+[ext_resource type="Script" uid="uid://bbedxdrmiq22g" path="res://scripts/Hud.cs" id="15_hud"]
+
+[node name="Game" type="Node3D" unique_id=831673852]
+script = ExtResource("1_game")
+TankScene = ExtResource("5_t72")
+TruckScene = ExtResource("6_truck")
+AaaScene = ExtResource("7_zsu23")
+SamScene = ExtResource("8_sa8")
+FriendlyScene = ExtResource("4_m1a2")
+MaverickScene = ExtResource("9_maverick")
+SamMissileScene = ExtResource("10_sam")
+BombModel = ExtResource("11_mk82")
+ParticleHard = ExtResource("12_hard")
+ParticleSoft = ExtResource("13_soft")
+
+[node name="World" parent="." unique_id=1122503721 instance=ExtResource("2_world")]
+
+[node name="Jet" parent="." unique_id=2090950762 instance=ExtResource("3_jet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1500, 650, 0)
+
+[node name="Units" type="Node3D" parent="." unique_id=1925196713]
+
+[node name="Friendly1" parent="Units" unique_id=1834189127 instance=ExtResource("4_m1a2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3560, 0, -12)
+
+[node name="Friendly2" parent="Units" unique_id=2070626974 instance=ExtResource("4_m1a2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3640, 0, 2)
+
+[node name="Friendly3" parent="Units" unique_id=1879077264 instance=ExtResource("4_m1a2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3720, 0, -6)
+
+[node name="Friendly4" parent="Units" unique_id=378517371 instance=ExtResource("4_m1a2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3790, 0, 5)
+
+[node name="Camera" type="Camera3D" parent="." unique_id=574672366]
+current = true
+fov = 50.0
+near = 0.5
+far = 24000.0
+
+[node name="Audio" type="Node" parent="." unique_id=726575198]
+script = ExtResource("14_audio")
+
+[node name="HudLayer" type="CanvasLayer" parent="." unique_id=2026526593]
+
+[node name="Hud" type="Control" parent="HudLayer" unique_id=613828301]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("15_hud")

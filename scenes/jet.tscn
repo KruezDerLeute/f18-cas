@@ -1,0 +1,114 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/Jet.cs" id="1_jet"]
+[ext_resource type="PackedScene" path="res://assets/models/f18.glb" id="2_f18"]
+[ext_resource type="PackedScene" path="res://assets/models/mk82.glb" id="3_mk82"]
+[ext_resource type="PackedScene" path="res://assets/models/agm65.glb" id="4_agm65"]
+
+[sub_resource type="StandardMaterial3D" id="FlameMat"]
+transparency = 1
+blend_mode = 1
+cull_mode = 2
+shading_mode = 0
+albedo_color = Color(1, 0.55, 0.2, 0.85)
+
+[sub_resource type="StandardMaterial3D" id="CoreMat"]
+transparency = 1
+blend_mode = 1
+cull_mode = 2
+shading_mode = 0
+albedo_color = Color(0.55, 0.65, 1, 0.9)
+
+[sub_resource type="CylinderMesh" id="OuterMesh"]
+top_radius = 0.08
+bottom_radius = 0.42
+height = 1.0
+radial_segments = 10
+rings = 1
+
+[sub_resource type="CylinderMesh" id="InnerMesh"]
+top_radius = 0.05
+bottom_radius = 0.3
+height = 0.55
+radial_segments = 10
+rings = 1
+
+[node name="Jet" type="Node3D"]
+script = ExtResource("1_jet")
+
+[node name="Roll" type="Node3D" parent="."]
+
+[node name="F18" parent="Roll" instance=ExtResource("2_f18")]
+
+[node name="FlameL" type="Node3D" parent="Roll"]
+position = Vector3(-7.95, -1.14, -0.55)
+
+[node name="Outer" type="MeshInstance3D" parent="Roll/FlameL"]
+position = Vector3(-0.5, 0, 0)
+rotation = Vector3(0, 0, 1.5708)
+cast_shadow = 0
+mesh = SubResource("OuterMesh")
+material_override = SubResource("FlameMat")
+
+[node name="Inner" type="MeshInstance3D" parent="Roll/FlameL"]
+position = Vector3(-0.28, 0, 0)
+rotation = Vector3(0, 0, 1.5708)
+cast_shadow = 0
+mesh = SubResource("InnerMesh")
+material_override = SubResource("CoreMat")
+
+[node name="FlameR" type="Node3D" parent="Roll"]
+position = Vector3(-7.95, -1.14, 0.55)
+
+[node name="Outer" type="MeshInstance3D" parent="Roll/FlameR"]
+position = Vector3(-0.5, 0, 0)
+rotation = Vector3(0, 0, 1.5708)
+cast_shadow = 0
+mesh = SubResource("OuterMesh")
+material_override = SubResource("FlameMat")
+
+[node name="Inner" type="MeshInstance3D" parent="Roll/FlameR"]
+position = Vector3(-0.28, 0, 0)
+rotation = Vector3(0, 0, 1.5708)
+cast_shadow = 0
+mesh = SubResource("InnerMesh")
+material_override = SubResource("CoreMat")
+
+[node name="AfterburnerLight" type="OmniLight3D" parent="Roll"]
+position = Vector3(-10.95, -1.14, 0)
+light_color = Color(1, 0.6, 0.3, 1)
+light_energy = 0.0
+omni_range = 25.0
+
+[node name="MuzzleLight" type="OmniLight3D" parent="Roll"]
+position = Vector3(7.65, -0.54, 0)
+light_color = Color(1, 0.8, 0.4, 1)
+light_energy = 0.0
+omni_range = 12.0
+
+[node name="Bomb0" parent="Roll" instance=ExtResource("3_mk82")]
+position = Vector3(-1, -1.78, -2.35)
+
+[node name="Bomb1" parent="Roll" instance=ExtResource("3_mk82")]
+position = Vector3(-1, -1.78, 2.35)
+
+[node name="Bomb2" parent="Roll" instance=ExtResource("3_mk82")]
+position = Vector3(-1, -1.78, -3.39)
+
+[node name="Bomb3" parent="Roll" instance=ExtResource("3_mk82")]
+position = Vector3(-1, -1.78, 3.39)
+
+[node name="Maverick0" parent="Roll" instance=ExtResource("4_agm65")]
+position = Vector3(-0.7, -1.73, -4.57)
+
+[node name="Maverick1" parent="Roll" instance=ExtResource("4_agm65")]
+position = Vector3(-0.7, -1.73, 4.57)
+
+[node name="VaporL" type="Marker3D" parent="Roll"]
+position = Vector3(-1.8, -1.03, -6.32)
+
+[node name="VaporR" type="Marker3D" parent="Roll"]
+position = Vector3(-1.8, -1.03, 6.32)
+
+[node name="SmokePoint" type="Marker3D" parent="Roll"]
+position = Vector3(-7.95, -1.14, 0)

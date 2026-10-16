@@ -1,0 +1,40 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/Missile.cs" id="1_missile"]
+[ext_resource type="PackedScene" path="res://assets/models/agm65.glb" id="2_model"]
+
+[sub_resource type="StandardMaterial3D" id="ExhaustMat"]
+transparency = 1
+blend_mode = 1
+cull_mode = 2
+shading_mode = 0
+albedo_color = Color(1, 0.7, 0.35, 0.9)
+
+[sub_resource type="CylinderMesh" id="FlameMesh"]
+top_radius = 0.03
+bottom_radius = 0.22
+height = 1.6
+radial_segments = 8
+rings = 1
+
+[node name="Maverick" type="Node3D"]
+script = ExtResource("1_missile")
+IsAgm = true
+Ignition = 0.35
+Motor = 4.0
+Boost = 70.0
+DragK = 5e-05
+MaxG = 14.0
+Nav = 3.0
+Life = 35.0
+Prox = 4.5
+Damage = 450.0
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+
+[node name="Flame" type="MeshInstance3D" parent="."]
+position = Vector3(-2.2, 0, 0)
+rotation = Vector3(0, 0, 1.5708)
+cast_shadow = 0
+mesh = SubResource("FlameMesh")
+material_override = SubResource("ExhaustMat")

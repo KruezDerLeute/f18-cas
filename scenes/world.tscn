@@ -1,0 +1,81 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/Terrain.cs" id="1_terrain"]
+[ext_resource type="PackedScene" uid="uid://bg3j0osiq0qel" path="res://assets/terrain.glb" id="2_terrain_glb"]
+[ext_resource type="PackedScene" uid="uid://epc3wrg0m7as" path="res://assets/models/airbase.glb" id="3_airbase"]
+[ext_resource type="PackedScene" path="res://assets/models/sandbag.glb" id="4_sandbag"]
+[ext_resource type="Script" path="res://scripts/Clouds.cs" id="5_clouds"]
+[ext_resource type="Texture2D" path="res://assets/textures/cloud.png" id="6_cloud"]
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
+sky_top_color = Color(0.22, 0.42, 0.78, 1)
+sky_horizon_color = Color(0.68, 0.77, 0.88, 1)
+ground_bottom_color = Color(0.3, 0.3, 0.28, 1)
+ground_horizon_color = Color(0.6, 0.65, 0.7, 1)
+
+[sub_resource type="Sky" id="Sky"]
+sky_material = SubResource("SkyMat")
+
+[sub_resource type="Environment" id="Env"]
+background_mode = 2
+sky = SubResource("Sky")
+ambient_light_source = 3
+ambient_light_energy = 0.7
+tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 0.6
+fog_enabled = true
+fog_light_color = Color(0.66, 0.74, 0.85, 1)
+fog_density = 9e-05
+fog_sky_affect = 0.0
+
+[node name="World" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.837758, -0.610865, 0)
+light_energy = 1.2
+shadow_enabled = true
+directional_shadow_max_distance = 1500.0
+
+[node name="Terrain" type="Node3D" parent="."]
+script = ExtResource("1_terrain")
+
+[node name="TerrainMesh" parent="Terrain" instance=ExtResource("2_terrain_glb")]
+
+[node name="Airbase" parent="." instance=ExtResource("3_airbase")]
+
+[node name="FriendlyLine" type="Marker3D" parent="."]
+position = Vector3(3800, 0, 0)
+
+[node name="GroundProps" type="Node3D" parent="."]
+
+[node name="Sandbag1" parent="GroundProps" instance=ExtResource("4_sandbag")]
+position = Vector3(3840, 0, 12)
+
+[node name="Sandbag2" parent="GroundProps" instance=ExtResource("4_sandbag")]
+position = Vector3(3845, 0, 12)
+
+[node name="Sandbag3" parent="GroundProps" instance=ExtResource("4_sandbag")]
+position = Vector3(3850, 0, 12)
+
+[node name="Sandbag4" parent="GroundProps" instance=ExtResource("4_sandbag")]
+position = Vector3(3855, 0, 12)
+
+[node name="Sandbag5" parent="GroundProps" instance=ExtResource("4_sandbag")]
+position = Vector3(3860, 0, 12)
+
+[node name="Sandbag6" parent="GroundProps" instance=ExtResource("4_sandbag")]
+position = Vector3(3865, 0, 12)
+
+[node name="Sandbag7" parent="GroundProps" instance=ExtResource("4_sandbag")]
+position = Vector3(3870, 0, 12)
+
+[node name="Sandbag8" parent="GroundProps" instance=ExtResource("4_sandbag")]
+position = Vector3(3875, 0, 12)
+
+[node name="Clouds" type="Node3D" parent="."]
+script = ExtResource("5_clouds")
+Texture = ExtResource("6_cloud")

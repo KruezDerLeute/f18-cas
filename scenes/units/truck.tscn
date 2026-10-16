@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/Unit.cs" id="1_unit"]
+[ext_resource type="PackedScene" path="res://assets/models/truck.glb" id="2_model"]
+
+[node name="Truck" type="Node3D"]
+script = ExtResource("1_unit")
+Kind = 1
+DisplayName = "TRUCK"
+Team = 1
+Hp = 35.0
+Radius = 4.0
+CenterHeight = 1.4
+Speed = 11.0
+GunArmor = 1.0
+Value = 50
+
+[node name="Body" type="Node3D" parent="."]
+
+[node name="Model" parent="Body" instance=ExtResource("2_model")]

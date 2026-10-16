@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/Unit.cs" id="1_unit"]
+[ext_resource type="PackedScene" path="res://assets/models/m1a2.glb" id="2_model"]
+
+[node name="M1A2" type="Node3D"]
+script = ExtResource("1_unit")
+Kind = 4
+DisplayName = "M1A2"
+Team = 0
+Hp = 160.0
+Radius = 4.8
+CenterHeight = 1.6
+Speed = 0.0
+GunArmor = 0.25
+Value = 0
+
+[node name="Body" type="Node3D" parent="."]
+
+[node name="Model" parent="Body" instance=ExtResource("2_model")]

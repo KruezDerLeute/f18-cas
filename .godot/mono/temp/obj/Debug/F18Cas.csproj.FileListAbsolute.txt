@@ -1,0 +1,17 @@
+/home/kami/f18-cas-csharp/.godot/mono/temp/bin/Debug/F18Cas.deps.json
+/home/kami/f18-cas-csharp/.godot/mono/temp/bin/Debug/F18Cas.runtimeconfig.json
+/home/kami/f18-cas-csharp/.godot/mono/temp/bin/Debug/F18Cas.dll
+/home/kami/f18-cas-csharp/.godot/mono/temp/bin/Debug/F18Cas.pdb
+/home/kami/f18-cas-csharp/.godot/mono/temp/bin/Debug/GodotSharp.dll
+/home/kami/f18-cas-csharp/.godot/mono/temp/bin/Debug/GodotSharpEditor.dll
+/home/kami/f18-cas-csharp/.godot/mono/temp/obj/Debug/F18Cas.csproj.AssemblyReference.cache
+/home/kami/f18-cas-csharp/.godot/mono/temp/obj/Debug/F18Cas.GeneratedMSBuildEditorConfig.editorconfig
+/home/kami/f18-cas-csharp/.godot/mono/temp/obj/Debug/F18Cas.AssemblyInfoInputs.cache
+/home/kami/f18-cas-csharp/.godot/mono/temp/obj/Debug/F18Cas.AssemblyInfo.cs
+/home/kami/f18-cas-csharp/.godot/mono/temp/obj/Debug/F18Cas.csproj.CoreCompileInputs.cache
+/home/kami/f18-cas-csharp/.godot/mono/temp/obj/Debug/F18Cas.csproj.Up2Date
+/home/kami/f18-cas-csharp/.godot/mono/temp/obj/Debug/F18Cas.dll
+/home/kami/f18-cas-csharp/.godot/mono/temp/obj/Debug/refint/F18Cas.dll
+/home/kami/f18-cas-csharp/.godot/mono/temp/obj/Debug/F18Cas.pdb
+/home/kami/f18-cas-csharp/.godot/mono/temp/obj/Debug/F18Cas.genruntimeconfig.cache
+/home/kami/f18-cas-csharp/.godot/mono/temp/obj/Debug/ref/F18Cas.dll

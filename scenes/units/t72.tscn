@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/Unit.cs" id="1_unit"]
+[ext_resource type="PackedScene" path="res://assets/models/t72.glb" id="2_model"]
+
+[node name="T72" type="Node3D"]
+script = ExtResource("1_unit")
+Kind = 0
+DisplayName = "T-72"
+Team = 1
+Hp = 100.0
+Radius = 4.5
+CenterHeight = 1.6
+Speed = 7.0
+GunArmor = 0.3
+Value = 100
+
+[node name="Body" type="Node3D" parent="."]
+
+[node name="Model" parent="Body" instance=ExtResource("2_model")]
