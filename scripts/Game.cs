@@ -21,7 +21,6 @@ public partial class Game : Node3D
     [Export] public PackedScene TruckScene;
     [Export] public PackedScene AaaScene;
     [Export] public PackedScene SamScene;
-    [Export] public PackedScene FriendlyScene;
     [ExportGroup("Weapons")]
     [Export] public PackedScene MaverickScene;
     [Export] public PackedScene SamMissileScene;
@@ -84,8 +83,6 @@ public partial class Game : Node3D
 
     public override void _Ready()
     {
-        // "1.5" not "1,5" in HUD text, whatever the system locale.
-        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
         GD.Randomize();
         SetupInput();
         BuildResources();
@@ -115,7 +112,7 @@ public partial class Game : Node3D
         _hud.Main = this;
 
         Msg("TASKING: CLOSE AIR SUPPORT", new Color(0.6f, 1.0f, 0.6f), 6f);
-        Msg("Friendly armor holding at the green smoke. Enemy column inbound from the east.", Colors.White, 7f);
+        Msg("Friendly line is at the green smoke. Enemy column inbound from the east.", Colors.White, 7f);
         UpdateCamera(1f);
     }
 
@@ -143,6 +140,7 @@ public partial class Game : Node3D
             ["zoom_in"] = new[] { Key.Equal, Key.KpAdd },
             ["zoom_out"] = new[] { Key.Minus, Key.KpSubtract },
         };
+
         foreach (var (action, keys) in binds)
         {
             if (InputMap.HasAction(action))
@@ -243,9 +241,6 @@ public partial class Game : Node3D
         Units.Add(u);
         return u;
     }
-
-    void SpawnFriendly() =>
-        SpawnUnit(FriendlyScene, FriendlyLine - Fx.Rand(0f, 260f), Fx.Rand(-14f, 6f));
 
     void StartWave()
     {
@@ -864,17 +859,6 @@ public partial class Game : Node3D
             WaveTimer = 25f;
             Score += 300 * Wave;
             Msg($"WAVE {Wave} CLEARED  +{300 * Wave}  -  land on the runway to rearm", new Color(0.6f, 1.0f, 0.6f), 7f);
-            int alive = CountTeam(0);
-            for (int i = 0; i < Mathf.Clamp(6 - alive, 0, 2); i++)
-                SpawnFriendly();
-            if (alive < 6)
-                Msg("Friendly reinforcements arriving", new Color(0.8f, 0.9f, 0.8f), 4f);
-        }
-        else if (CountTeam(0) == 0)
-        {
-            State = GameState.Overrun;
-            StateTime = 0f;
-            Msg("FRIENDLY POSITION OVERRUN", new Color(1, 0.3f, 0.2f), 10f);
         }
     }
 

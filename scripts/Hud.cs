@@ -305,8 +305,6 @@ public partial class Hud : Control
 		y += 22f;
 		Txt(new Vector2(x, y), $"HOSTILE  {Main.CountTeam(1)}", 16, CWarn);
 		y += 22f;
-		Txt(new Vector2(x, y), $"FRIENDLY {Main.CountTeam(0)}", 16, CFriend);
-		y += 22f;
 		Txt(new Vector2(x, y), $"KILLS  {Main.Kills}", 14, CDim);
 		if (!Main.WaveActive && Main.State == GameState.Play)
 		{
@@ -429,7 +427,7 @@ public partial class Hud : Control
 		string title = Main.State == GameState.Dead ? "AIRCRAFT LOST" : "FRIENDLY POSITION OVERRUN";
 		var c = new Vector2(Size.X * 0.5f, Size.Y * 0.4f);
 		CTxt(c, title, 44, CWarn);
-		CTxt(c + new Vector2(0, 50), $"Score {Main.Score}    Waves survived {Mathf.Max(Main.Wave - 1, 0)}    Kills {Main.Kills}    Friendly fire {Main.FriendlyKills}", 20, CHud);
+		CTxt(c + new Vector2(0, 50), $"Score {Main.Score}    Waves survived {Mathf.Max(Main.Wave - 1, 0)}    Kills {Main.Kills}", 20, CHud);
 		CTxt(c + new Vector2(0, 90), "Press R to fly again", 20, CAmber);
 	}
 }

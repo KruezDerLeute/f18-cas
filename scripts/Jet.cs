@@ -33,7 +33,7 @@ public partial class Jet : Node3D, ITarget
     const int MaxBombs = 4;
     const int MaxMavs = 2;
     const int MaxAmmo = 578;
-    const int MaxFlares = 60;
+    const int MaxFlares = 130;
     const float Length = 18.3f;
 
     /// Speed at the start, along the direction the jet is rotated to in the editor.
@@ -117,7 +117,6 @@ public partial class Jet : Node3D, ITarget
     public Vector2 TargetVel => Vel;
     public bool IsTargetValid() => Alive;
 
-    // ---------------------------------------------------------------- scene parts
 
     /// Finds the parts placed in jet.tscn and adds the particle effects at the markers.
     void FindParts()

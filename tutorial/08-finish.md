@@ -118,4 +118,6 @@ godot --headless --path . res://tools/tools.tscn -- --export-f18
 
 ⚠️ This **overwrites** the files in `assets/`.
 
+Next: [Chapter 9: The scripts, file by file](09-scripts.md)
+
 ← Back to the [start page](../TUTORIAL.md)

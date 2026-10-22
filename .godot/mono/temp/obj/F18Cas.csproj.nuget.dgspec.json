@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/home/kami/f18-cas-csharp/F18Cas.csproj": {}
+    "/home/kaminnit/Documents/3rd_year/game/f18-cas/F18Cas.csproj": {}
   },
   "projects": {
-    "/home/kami/f18-cas-csharp/F18Cas.csproj": {
+    "/home/kaminnit/Documents/3rd_year/game/f18-cas/F18Cas.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/kami/f18-cas-csharp/F18Cas.csproj",
+        "projectUniqueName": "/home/kaminnit/Documents/3rd_year/game/f18-cas/F18Cas.csproj",
         "projectName": "F18Cas",
-        "projectPath": "/home/kami/f18-cas-csharp/F18Cas.csproj",
-        "packagesPath": "/home/kami/.nuget/packages/",
-        "outputPath": "/home/kami/f18-cas-csharp/.godot/mono/temp/obj/",
+        "projectPath": "/home/kaminnit/Documents/3rd_year/game/f18-cas/F18Cas.csproj",
+        "packagesPath": "/home/kaminnit/.nuget/packages/",
+        "outputPath": "/home/kaminnit/Documents/3rd_year/game/f18-cas/.godot/mono/temp/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/kami/.nuget/NuGet/NuGet.Config"
+          "/home/kaminnit/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"

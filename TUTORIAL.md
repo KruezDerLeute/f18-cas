@@ -25,6 +25,7 @@ The finished project is in this folder (`game.tscn`, `scenes/`, `scripts/`, `ass
 | 6 | [The main scene](tutorial/06-main-scene.md) | `game.tscn`: everything together, plus camera, sound and HUD | wiring scenes together; **play the game** |
 | 7 | [How the game runs](tutorial/07-how-it-works.md) | — | `Game.cs`, `Hud.cs`, `Audio.cs` and the helpers explained |
 | 8 | [Playing, editing, troubleshooting](tutorial/08-finish.md) | — | controls, changing the game in the editor, fixing problems, ideas |
+| 9 | [The scripts, file by file](tutorial/09-scripts.md) | — | every `.cs` file explained method by method, plus a C# quick reference |
 
 ---
 

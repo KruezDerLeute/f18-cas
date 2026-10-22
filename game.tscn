@@ -3,7 +3,6 @@
 [ext_resource type="Script" uid="uid://b1h2pkv23714w" path="res://scripts/Game.cs" id="1_game"]
 [ext_resource type="PackedScene" path="res://scenes/world.tscn" id="2_world"]
 [ext_resource type="PackedScene" path="res://scenes/jet.tscn" id="3_jet"]
-[ext_resource type="PackedScene" path="res://scenes/units/m1a2.tscn" id="4_m1a2"]
 [ext_resource type="PackedScene" path="res://scenes/units/t72.tscn" id="5_t72"]
 [ext_resource type="PackedScene" path="res://scenes/units/truck.tscn" id="6_truck"]
 [ext_resource type="PackedScene" path="res://scenes/units/zsu23.tscn" id="7_zsu23"]
@@ -22,7 +21,6 @@ TankScene = ExtResource("5_t72")
 TruckScene = ExtResource("6_truck")
 AaaScene = ExtResource("7_zsu23")
 SamScene = ExtResource("8_sa8")
-FriendlyScene = ExtResource("4_m1a2")
 MaverickScene = ExtResource("9_maverick")
 SamMissileScene = ExtResource("10_sam")
 BombModel = ExtResource("11_mk82")
@@ -35,18 +33,6 @@ ParticleSoft = ExtResource("13_soft")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1500, 650, 0)
 
 [node name="Units" type="Node3D" parent="." unique_id=1925196713]
-
-[node name="Friendly1" parent="Units" unique_id=1834189127 instance=ExtResource("4_m1a2")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3560, 0, -12)
-
-[node name="Friendly2" parent="Units" unique_id=2070626974 instance=ExtResource("4_m1a2")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3640, 0, 2)
-
-[node name="Friendly3" parent="Units" unique_id=1879077264 instance=ExtResource("4_m1a2")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3720, 0, -6)
-
-[node name="Friendly4" parent="Units" unique_id=378517371 instance=ExtResource("4_m1a2")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3790, 0, 5)
 
 [node name="Camera" type="Camera3D" parent="." unique_id=574672366]
 current = true
