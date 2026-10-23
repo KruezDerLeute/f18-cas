@@ -14,6 +14,7 @@
 [ext_resource type="Texture2D" uid="uid://bxwbdwu2j3vk4" path="res://assets/textures/particle_soft.png" id="13_soft"]
 [ext_resource type="Script" uid="uid://te7evf4ltli1" path="res://scripts/Audio.cs" id="14_audio"]
 [ext_resource type="Script" uid="uid://bbedxdrmiq22g" path="res://scripts/Hud.cs" id="15_hud"]
+[ext_resource type="PackedScene" path="res://scenes/units/m1a2.tscn" id="16_m1a2"]
 
 [node name="Game" type="Node3D" unique_id=831673852]
 script = ExtResource("1_game")
@@ -33,6 +34,18 @@ ParticleSoft = ExtResource("13_soft")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1500, 650, 0)
 
 [node name="Units" type="Node3D" parent="." unique_id=1925196713]
+
+[node name="M1A2_1" parent="Units" instance=ExtResource("16_m1a2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3780, 0, -8)
+
+[node name="M1A2_2" parent="Units" instance=ExtResource("16_m1a2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3740, 0, 6)
+
+[node name="M1A2_3" parent="Units" instance=ExtResource("16_m1a2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3700, 0, -2)
+
+[node name="M1A2_4" parent="Units" instance=ExtResource("16_m1a2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3650, 0, 9)
 
 [node name="Camera" type="Camera3D" parent="." unique_id=574672366]
 current = true
