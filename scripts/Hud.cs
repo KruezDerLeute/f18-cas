@@ -62,6 +62,16 @@ public partial class Hud : Control
 	bool OnScreen(Vector2 s, float margin = 0f) =>
 		s.X > margin && s.Y > margin && s.X < Size.X - margin && s.Y < Size.Y - margin;
 
+	/// Where the line from the screen centre to an off-screen point crosses the
+	/// screen rectangle inset by margin, and the direction towards the point.
+	(Vector2 edge, Vector2 dir) EdgePoint(Vector2 s, float margin)
+	{
+		var center = Size * 0.5f;
+		var d = s - center;
+		float t = Mathf.Min((center.X - margin) / Mathf.Max(Mathf.Abs(d.X), 0.001f), (center.Y - margin) / Mathf.Max(Mathf.Abs(d.Y), 0.001f));
+		return (center + d * t, d.Normalized());
+	}
+
 	public override void _Draw()
 	{
 		if (Main?.Jet == null)
@@ -71,6 +81,7 @@ public partial class Hud : Control
 		DrawOffscreenEnemies(j);
 		DrawFlightData(j);
 		DrawWeapons(j);
+		DrawFlir(j);
 		DrawScore();
 		DrawMap(j);
 		DrawWarnings(j);
@@ -101,13 +112,9 @@ public partial class Hud : Control
 			var s = W2S(u.CPos, u.LaneZ);
 			if (s == null || OnScreen(s.Value))
 				continue;
-			var d = s.Value - center;
-			if (d.Length() < 1f)
+			if ((s.Value - center).Length() < 1f)
 				continue;
-			// Scale the direction so it touches the inset screen rectangle.
-			float t = Mathf.Min((center.X - margin) / Mathf.Max(Mathf.Abs(d.X), 0.001f), (center.Y - margin) / Mathf.Max(Mathf.Abs(d.Y), 0.001f));
-			var e = center + d * t;
-			var dir = d.Normalized();
+			var (e, dir) = EdgePoint(s.Value, margin);
 			var side = dir.Orthogonal();
 			bool threat = u.Kind == UnitKind.Sam || u.Kind == UnitKind.Aaa;
 			var col = threat ? CAmber : CWarn;
@@ -189,15 +196,48 @@ public partial class Hud : Control
 				DrawLine(gp + new Vector2(0, -8), gp + new Vector2(0, 8), c, 1.5f);
 			}
 		}
-		// Maverick lock.
+		// Targeting pod crosshair on the ground while it's slewed by hand.
+		if (Main.Flir is { Visible: true, Manual: true } pod && W2S(new Vector2(pod.Aim.X, pod.Aim.Y), pod.Aim.Z) is Vector2 ps)
+		{
+			var pc = pod.Slewing ? CHud : CDim;
+			if (OnScreen(ps, 10f))
+			{
+				DrawLine(ps + new Vector2(-12, 0), ps + new Vector2(-4, 0), pc, 1.5f);
+				DrawLine(ps + new Vector2(4, 0), ps + new Vector2(12, 0), pc, 1.5f);
+				DrawLine(ps + new Vector2(0, -12), ps + new Vector2(0, -4), pc, 1.5f);
+				DrawLine(ps + new Vector2(0, 4), ps + new Vector2(0, 12), pc, 1.5f);
+			}
+			else
+			{
+				var (e, dir) = EdgePoint(ps, 30f);
+				DrawPolyline(new[] { e - dir * 10f + dir.Orthogonal() * 6f, e, e - dir * 10f - dir.Orthogonal() * 6f }, pc, 2f);
+				CTxt(e - dir * 26f + new Vector2(0, 5), "POD", 11, pc);
+			}
+		}
+		// Maverick lock. Off-screen targets get the diamond pinned to the screen edge.
 		var lt = j.LockTarget;
-		if (j.Alive && lt != null && IsInstanceValid(lt) && lt.Alive && W2S(lt.CPos, lt.LaneZ) is Vector2 ls)
+		if (j.Alive && lt != null && IsInstanceValid(lt) && W2S(lt.CPos, lt.LaneZ) is Vector2 ls)
 		{
 			bool tracking = j.LockTime > 0.8f;
 			float r = tracking ? 14f : 22f - j.LockTime * 10f;   // diamond shrinks while acquiring
-			var c = tracking ? CHud : CAmber;
-			DrawPolyline(new[] { ls + new Vector2(0, -r), ls + new Vector2(r, 0), ls + new Vector2(0, r), ls + new Vector2(-r, 0), ls + new Vector2(0, -r) }, c, 2f);
-			Txt(ls + new Vector2(r + 4, -r), tracking ? "TRACK" : "ACQ", 12, c);
+			var c = !lt.Alive ? CDim : tracking ? CHud : CAmber;
+			if (jp != null)
+				DrawDashedLine(jp.Value, ls, new Color(c, 0.4f), 1f, 6f);   // seeker line
+			bool onScreen = OnScreen(ls, 40f);
+			var dp = ls;
+			if (!onScreen)
+			{
+				var (e, dir) = EdgePoint(ls, 70f);
+				dp = e;
+				DrawColoredPolygon(new[] { e + dir * (r + 14f), e + dir * r + dir.Orthogonal() * 6f, e + dir * r - dir.Orthogonal() * 6f }, c);
+			}
+			DrawPolyline(new[] { dp + new Vector2(0, -r), dp + new Vector2(r, 0), dp + new Vector2(0, r), dp + new Vector2(-r, 0), dp + new Vector2(0, -r) }, c, 2f);
+			string label = !lt.Alive ? "DESTROYED" : tracking ? "TRACK" : "ACQ";
+			if (!onScreen)
+				label += $" {lt.DisplayName} {lt.CPos.DistanceTo(j.Pos) / 1000f:F1} km";
+			// Keep the label inside the screen when the diamond sits on the right edge.
+			bool left = dp.X > Size.X * 0.5f && !onScreen;
+			Txt(dp + new Vector2(left ? -r - 4 - 150 : r + 4, -r), label, 12, c, left ? HorizontalAlignment.Right : HorizontalAlignment.Left, left ? 150f : -1f);
 		}
 		// Incoming missiles.
 		foreach (var m in Main.Missiles)
@@ -281,7 +321,7 @@ public partial class Hud : Control
 		var rows = new (string name, int count, string key)[]
 		{
 			("GUN  M61A2", j.Ammo, "SPACE"),
-			("MK-82", j.Bombs, "B"),
+			("GBU-12", j.Bombs, "B"),
 			("AGM-65", j.Mavs, "M"),
 			("FLARE", j.Flares, "X"),
 		};
@@ -292,6 +332,49 @@ public partial class Hud : Control
 			Txt(new Vector2(x + 115, y), count.ToString(), 17, empty ? CWarn : CHud);
 			Txt(new Vector2(x + 165, y), key, 12, CDim);
 			y += 24f;
+		}
+		// Maverick target readout above the panel.
+		var lt = j.LockTarget;
+		if (lt != null && IsInstanceValid(lt))
+		{
+			bool tracking = j.LockTime > 0.8f;
+			string state = !lt.Alive ? "DESTROYED" : tracking ? "TRACK" : "ACQ";
+			Txt(new Vector2(x - 10, Size.Y - 152f), $"TGT  {lt.DisplayName}  {lt.CPos.DistanceTo(j.Pos) / 1000f:F1} km  {state}",
+					14, !lt.Alive ? CDim : tracking ? CHud : CAmber);
+		}
+		else if (j.Mavs > 0 || j.Bombs > 0)
+			Txt(new Vector2(x - 10, Size.Y - 152f), "TGT  NONE", 14, CDim);
+	}
+
+	/// Frame, crosshair and readouts over the targeting pod picture.
+	void DrawFlir(Jet j)
+	{
+		var f = Main.Flir;
+		if (f == null || !f.Visible)
+			return;
+		var r = f.Rect;
+		DrawRect(r, CHud, false, 1.5f);
+		var c = r.GetCenter();
+		const float gap = 8f, len = 22f;
+		foreach (var d in new[] { Vector2.Left, Vector2.Right, Vector2.Up, Vector2.Down })
+			DrawLine(c + d * gap, c + d * len, CHud, 1.5f);
+		Txt(r.Position + new Vector2(6, 16), "FLIR  WHOT", 12, CHud);
+		Txt(r.Position + new Vector2(r.Size.X - 60, 16), f.Manual ? "MAN" : "AUTO", 12, CHud);
+		string info;
+		if (f.Slewing)
+			info = $"SLEW  {f.Range / 1000f:F1} km";
+		else if (f.Target != null)
+			info = $"{f.Target.DisplayName}  {f.Range / 1000f:F1} km  {(!f.Target.Alive ? "DESTROYED" : j.LockTime > 0.8f ? "TRACK" : "ACQ")}";
+		else
+			info = $"{(f.Manual ? "POINT" : "SCAN")}  {f.Range / 1000f:F1} km";
+		Txt(r.Position + new Vector2(6, r.Size.Y - 8), info, 12, CHud);
+		// Laser: steady while lasing, blinking with the time to impact while a bomb is guiding.
+		float tti = Main.LgbTimeToImpact();
+		if (j.Lasing)
+		{
+			string laser = tti >= 0f ? $"LASE  LGB {tti:F0}s" : "LASER RDY";
+			if (tti < 0f || (_blink % 0.6f) < 0.4f)
+				Txt(r.Position + new Vector2(r.Size.X - 6 - 120, r.Size.Y - 8), laser, 12, CHud, HorizontalAlignment.Right, 120f);
 		}
 	}
 
@@ -403,10 +486,12 @@ public partial class Hud : Control
 			"F       half-roll (flip canopy side)",
 			"E / Q   throttle up / down  (past 80% bar = AB)",
 			"SPACE   M61 cannon",
-			"B       drop Mk-82  (fly the pipper onto target)",
-			"M       AGM-65 Maverick  (T cycles target)",
+			"B       drop GBU-12  (guides to a tracked target, else use the pipper)",
+			"M       AGM-65 Maverick  (T cycles target / pod auto)",
 			"X       flares",
-			"Z       speedbrake / wheel brakes",
+			"Z       speedbrake / wheel brakes (toggle)",
+			"V       targeting pod (FLIR) on / off",
+			"RMB     hold + drag: slew pod, wheel zooms, release designates",
 			"G       landing gear  (land on runway to rearm)",
 			"Wheel / +/-  zoom    P pause   R restart   H help",
 		};

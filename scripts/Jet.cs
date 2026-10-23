@@ -30,6 +30,7 @@ public partial class Jet : Node3D, ITarget
     const float Mk82Mass = 227f;
     const float Agm65Mass = 300f;
     const float GearH = 3.4f;           // jet centre above the wheels, gear down
+    const float TailStrike = 0.40f;     // rad (~23 deg): a higher nose at touchdown drags the tail
     const int MaxBombs = 4;
     const int MaxMavs = 2;
     const int MaxAmmo = 578;
@@ -74,6 +75,9 @@ public partial class Jet : Node3D, ITarget
     public bool Firing;
     public Unit LockTarget;
     public float LockTime;
+    /// True while the targeting pod's laser is on a tracked target (guides bombs).
+    public bool Lasing => Alive && LockTarget != null && IsInstanceValid(LockTarget) && LockTarget.Alive
+            && LockTime > 0.8f && Main.Flir.On;
     public float RearmTimer;
     public float RwrLock;
     public Vector2? Ccip;
@@ -85,6 +89,10 @@ public partial class Jet : Node3D, ITarget
     OmniLight3D _abLight;
     OmniLight3D _muzzleLight;
     readonly List<CpuParticles3D> _vapor = new();
+    MeshInstance3D _shockCone;
+    ShaderMaterial _shockMat;
+    Gradient _boomRamp;
+    bool _supersonic;
     CpuParticles3D _smoke;
     readonly List<Node3D> _gearOn = new();
     readonly List<Node3D> _gearOff = new();
@@ -163,6 +171,21 @@ public partial class Jet : Node3D, ITarget
             _rollNode.AddChild(v);
             _vapor.Add(v);
         }
+        // Transonic vapour cone: a soft see-through cone around the wings, open at the back.
+        _shockMat = new ShaderMaterial { Shader = new Shader { Code = ShockConeShader } };
+        _shockCone = new MeshInstance3D
+        {
+            Mesh = new CylinderMesh { TopRadius = 1.8f, BottomRadius = 7.5f, Height = 7f, RadialSegments = 32, Rings = 4, CapTop = false, CapBottom = false },
+            MaterialOverride = _shockMat,
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+            Position = new Vector3(-2f, -0.4f, 0f),
+            Rotation = Fx.AlongX,   // narrow end at the nose
+            Visible = false,
+        };
+        _rollNode.AddChild(_shockCone);
+        _boomRamp = Fx.Ramp(new[] { 0f, 0.15f, 1f },
+                new[] { new Color(1, 1, 1, 0f), new Color(1, 1, 1, 0.6f), new Color(1, 1, 1, 0f) });
+
         // Damage smoke from the engines.
         _smoke = Main.MakeParticles(Main.SmokeQuad, 50, 3f, new Vector2(1, 4), new Vector2(2.5f, 6f),
                 Main.SmokeRamp, new Vector3(0, 2, 0), 1f, false, 30f);
@@ -188,6 +211,7 @@ public partial class Jet : Node3D, ITarget
         }
         GroundService(dt);
         Weapons(dt);
+        Transonic();
         UpdateVisual();
         ComputeCcip();
     }
@@ -200,7 +224,11 @@ public partial class Jet : Node3D, ITarget
             Throttle = Mathf.Min(Throttle + dt * 0.5f, 1.25f);
         if (Input.IsActionPressed("throttle_down"))
             Throttle = Mathf.Max(Throttle - dt * 0.5f, 0f);
-        Airbrake = Input.IsActionPressed("airbrake");
+        if (Input.IsActionJustPressed("airbrake"))
+        {
+            Airbrake = !Airbrake;
+            Main.Msg((OnGround ? "BRAKES " : "SPEEDBRAKE ") + (Airbrake ? "ON" : "OFF"), new Color(0.6f, 0.9f, 1.0f), 2f);
+        }
         if (Input.IsActionJustPressed("flip") && !OnGround)
             _phiTarget += Mathf.Pi;
         if (Input.IsActionJustPressed("gear") && !OnGround)
@@ -342,15 +370,10 @@ public partial class Jet : Node3D, ITarget
         {
             float sink = -Vel.Y;
             bool runway = Main.Terrain.OnRunway(Pos.X);
-            bool ok = GearDown && runway && sink < 6.5f && upright && pitchRel > -0.06f && pitchRel < 0.32f;
+            bool ok = GearDown && runway && upright && pitchRel > -0.06f && pitchRel < TailStrike;
             if (!ok)
             {
-                string why = "CRASHED";
-                if (GearDown && runway && sink >= 6.5f)
-                    why = "HARD LANDING - GEAR COLLAPSED";
-                else if (runway && !GearDown)
-                    why = "GEAR-UP LANDING";
-                Crash(why);
+                Crash(TouchdownFailure(runway, upright, pitchRel));
                 return;
             }
             OnGround = true;
@@ -365,12 +388,28 @@ public partial class Jet : Node3D, ITarget
             Crash("RAN OFF THE RUNWAY");
             return;
         }
-        float clamped = Mathf.Clamp(pitchRel, 0f, 0.26f);
+        // Same upper limit as the touchdown check, so a nose-high landing isn't
+        // snapped down; the ground fly-by-wire lowers it from there.
+        float clamped = Mathf.Clamp(pitchRel, 0f, TailStrike);
         if (clamped != pitchRel)
         {
             Theta = f.X >= 0f ? clamped : Mathf.Pi - clamped;
             _thetaDot = 0f;
         }
+    }
+
+    /// Why a touchdown failed, most specific reason first.
+    string TouchdownFailure(bool runway, bool upright, float pitchRel)
+    {
+        if (!runway)
+            return GearDown && upright ? "LANDED OFF THE RUNWAY" : "CRASHED";
+        if (!GearDown)
+            return "GEAR-UP LANDING";
+        if (!upright)
+            return "LANDED INVERTED";
+        if (pitchRel >= TailStrike)
+            return "TAIL STRIKE - NOSE TOO HIGH";
+        return "NOSE GEAR FIRST - NOSE TOO LOW";
     }
 
     void GroundService(float dt)
@@ -421,7 +460,57 @@ public partial class Jet : Node3D, ITarget
         Visible = false;
         foreach (var v in _vapor)
             v.Emitting = false;
+        _shockCone.Visible = false;
         Main.OnJetDestroyed(reason);
+    }
+
+    // ---------------------------------------------------------------- sound barrier
+
+    const string ShockConeShader = @"
+shader_type spatial;
+render_mode unshaded, cull_disabled, depth_draw_never, blend_mix, shadows_disabled;
+uniform float strength = 0.0;
+
+void fragment() {
+    // Thicker where you look along the surface, fading out at both ends, with a shimmer.
+    float edge = 1.0 - abs(dot(NORMAL, VIEW));
+    float along = smoothstep(0.0, 0.25, UV.y) * smoothstep(1.0, 0.55, UV.y);
+    float shimmer = sin(UV.x * 40.0 + TIME * 7.0) * sin(UV.y * 23.0 - TIME * 11.0) * 0.5 + 0.5;
+    ALBEDO = vec3(1.0);
+    ALPHA = clamp(strength * along * mix(0.4, 0.95, edge) * mix(0.75, 1.0, shimmer), 0.0, 0.9);
+}";
+
+    /// Vapour cone between about Mach 0.92 and 1.08 (thicker in the damp low air),
+    /// and a sonic boom each time the jet goes through Mach 1.
+    void Transonic()
+    {
+        float band = Mathf.SmoothStep(0.92f, 0.98f, Mach) * (1f - Mathf.SmoothStep(1.02f, 1.08f, Mach));
+        float humid = Mathf.Clamp(1f - Pos.Y / 9000f, 0.25f, 1f);
+        float s = band * humid * Fx.Rand(0.85f, 1.05f);
+        _shockCone.Visible = s > 0.01f;
+        _shockMat.SetShaderParameter("strength", s);
+        _shockCone.Scale = new Vector3(1f, 1f + (Mach - 0.95f), 1f) * Fx.Rand(0.97f, 1.03f);
+
+        // Hysteresis, so hovering right at Mach 1 doesn't boom every frame.
+        if (!_supersonic && Mach >= 1f)
+        {
+            _supersonic = true;
+            SonicBoom();
+        }
+        else if (_supersonic && Mach < 0.97f)
+            _supersonic = false;
+    }
+
+    void SonicBoom()
+    {
+        var p = GlobalPosition;
+        // A real boom is a double bang: the nose shock, then the tail shock.
+        Main.Audio.PlayAt("boom", p, 3f, 0.55f);
+        Main.Audio.PlayAt("boom", p, 0f, 0.6f, 0.12f);
+        Main.Shake = Mathf.Max(Main.Shake, 0.5f);
+        var puff = Main.MakeParticles(Main.SmokeQuad, 40, 1.4f, new Vector2(15, 35), new Vector2(3, 7), _boomRamp, Vector3.Zero, 3f);
+        Main.FireOnce(puff, p, 2f);
+        Main.Msg("MACH 1", new Color(0.6f, 0.9f, 1.0f), 2f);
     }
 
     // ---------------------------------------------------------------- weapons
@@ -451,7 +540,11 @@ public partial class Jet : Node3D, ITarget
             Bombs--;
             _bombVis[Bombs].Visible = false;
             var d = BodyDown();
-            Main.SpawnBomb(Pos + d * 1.2f, Vel + d * 2.5f);
+            // With a tracked target the pod lases it and the bomb guides; otherwise it falls ballistic.
+            var tgt = Lasing ? LockTarget : null;
+            Main.SpawnBomb(Pos + d * 1.2f, Vel + d * 2.5f, tgt);
+            if (tgt != null)
+                Main.Msg("LGB AWAY - KEEP LASING", new Color(0.6f, 1.0f, 0.6f), 2f);
         }
         UpdateLock(dt);
         if (Input.IsActionJustPressed("fire_missile") && !OnGround)
@@ -460,6 +553,10 @@ public partial class Jet : Node3D, ITarget
                 Main.Msg("NO MAVERICKS", new Color(1, 0.75f, 0.2f), 1.5f);
             else if (LockTarget == null || LockTime < 0.8f)
                 Main.Msg("NO LOCK", new Color(1, 0.75f, 0.2f), 1.5f);
+            else if (!LockTarget.Alive)
+                Main.Msg("TARGET DESTROYED - DESIGNATE A NEW ONE", new Color(1, 0.75f, 0.2f), 1.5f);
+            else if (!InSeeker(LockTarget, 0.55f))
+                Main.Msg("OFF BORESIGHT - POINT THE NOSE AT IT", new Color(1, 0.75f, 0.2f), 1.5f);
             else if (_mavCd <= 0f)
             {
                 _mavCd = 0.6f;
@@ -505,17 +602,44 @@ public partial class Jet : Node3D, ITarget
         return Fwd().Dot(rel / d) > Mathf.Cos(cone);
     }
 
+    /// Locks a target picked with the targeting pod (null clears the lock).
+    /// False if the pod can't hold that target from where the jet is.
+    public bool Designate(Unit u)
+    {
+        if (u != null && !PodCanSee(u))
+            return false;
+        LockTarget = u;
+        LockTime = 0f;
+        return true;
+    }
+
+    /// The targeting pod keeps tracking anything not above the jet, or near the nose,
+    /// including a target that has just been destroyed (to watch the wreck).
+    bool PodCanSee(Unit u)
+    {
+        if (u == null || !IsInstanceValid(u) || !u.IsInsideTree())
+            return false;
+        var rel = u.CPos - Pos;
+        float d = rel.Length();
+        if (d < 50f || d > 12000f)
+            return false;
+        return rel.Y / d < 0.05f || Fwd().Dot(rel / d) > Mathf.Cos(0.55f);   // below ~3 degrees above the horizon, or in the nose cone
+    }
+
+    /// Picks the target near the nose (T cycles), then holds it with the pod.
     void UpdateLock(float dt)
     {
-        if (Mavs <= 0 || OnGround)
+        if (OnGround)
         {
             LockTarget = null;
             return;
         }
-        if (LockTarget != null && !InSeeker(LockTarget, 0.55f))
+        if (LockTarget != null && !PodCanSee(LockTarget))
             LockTarget = null;
         bool cycle = Input.IsActionJustPressed("cycle_target");
-        if (LockTarget == null || cycle)
+        if (cycle)
+            Main.Flir.Manual = false;   // T hands the pod back to automatic
+        if ((LockTarget == null && !Main.Flir.Manual) || cycle)
         {
             var f = Fwd();
             // Candidates sorted by how close they are to the nose.

@@ -6,7 +6,8 @@ using Godot;
 ///
 /// World sounds are positional (AudioStreamPlayer3D, heard from the camera) and
 /// distant explosions arrive late: sound travels at 343 m/s from where they
-/// happen to the jet.
+/// happen to the jet. Above Mach 1 the jet outruns sound, so sounds made behind
+/// it never arrive, and the jet's own engines fade out.
 public partial class Audio : Node
 {
     const float SpeedOfSound = 343f;
@@ -93,9 +94,12 @@ public partial class Audio : Node
         p.Finished += p.QueueFree;
     }
 
-    /// Positional one-shot in the world, optionally delayed.
+    /// Positional one-shot in the world, optionally delayed. A negative delay
+    /// (from SoundDelay: the jet outran it) means it's never heard.
     public void PlayAt(string sound, Vector3 pos, float volDb = 0f, float pitch = 1f, float delay = 0f)
     {
+        if (delay < 0f)
+            return;
         if (delay > 0.02f)
         {
             GetTree().CreateTimer(delay).Timeout += () =>
@@ -123,13 +127,36 @@ public partial class Audio : Node
         p.Finished += p.QueueFree;
     }
 
-    /// Seconds for sound to travel from pos to the player's jet (capped).
+    /// Seconds until a sound made at pos now catches the moving jet (capped),
+    /// or -1 if it never does: a supersonic jet flying away from it.
     public float SoundDelay(Vector3 pos)
     {
         if (Main?.Jet == null || !Main.Jet.Alive)
             return 0f;
-        var j = Main.Jet.Pos;
-        return Mathf.Min(pos.DistanceTo(new Vector3(j.X, j.Y, 0f)) / SpeedOfSound, 3f);
+        var j = Main.Jet;
+        // The wavefront (radius c*t) meets the jet at P + V*t:
+        // |D + V t| = c t  ->  (V.V - c^2) t^2 + 2 (D.V) t + D.D = 0,  with D = P - source.
+        var d = new Vector3(j.Pos.X, j.Pos.Y, 0f) - pos;
+        var v = new Vector3(j.Vel.X, j.Vel.Y, 0f);
+        float a = v.LengthSquared() - SpeedOfSound * SpeedOfSound;
+        float b = 2f * d.Dot(v);
+        float c = d.LengthSquared();
+        float t;
+        if (Mathf.Abs(a) < 1f)   // right at Mach 1
+            t = b < 0f ? -c / b : -1f;
+        else
+        {
+            float disc = b * b - 4f * a * c;
+            if (disc < 0f)
+                return -1f;   // supersonic, and the source is outside the Mach cone ahead
+            float sq = Mathf.Sqrt(disc);
+            float t1 = (-b - sq) / (2f * a);
+            float t2 = (-b + sq) / (2f * a);
+            // Subsonic: one root is negative, take the positive one. Supersonic: both
+            // roots positive only when flying towards the source; take the first.
+            t = a < 0f ? Mathf.Max(t1, t2) : (t1 > 0f && t2 > 0f ? Mathf.Min(t1, t2) : -1f);
+        }
+        return t < 0f ? -1f : Mathf.Min(t, 3f);
     }
 
     public override void _Process(double delta)
@@ -148,9 +175,11 @@ public partial class Audio : Node
         bool running = alive && j.Fuel > 0f;
         float eng = running ? Mathf.Clamp(j.EngineSpool, 0f, 1f) : 0f;
         float ab = running ? Mathf.Clamp((j.EngineSpool - 1f) / 0.25f, 0f, 1f) : 0f;
-        _engine.VolumeDb = running ? Db(0.06f + eng * 0.3f) : -80f;
+        // The engines are behind the nose: past Mach 1 their noise can't catch up.
+        float rear = alive ? 1f - Mathf.SmoothStep(0.96f, 1.02f, j.Mach) : 1f;
+        _engine.VolumeDb = running ? Db((0.06f + eng * 0.3f) * rear) : -80f;
         _engine.PitchScale = 0.55f + eng * 0.6f;
-        _ab.VolumeDb = Db(ab * 0.75f);
+        _ab.VolumeDb = Db(ab * 0.75f * rear);
         _ab.PitchScale = 0.9f + ab * 0.15f;
         float spd = alive ? j.Vel.Length() : 0f;
         float sf = Mathf.Clamp(spd / 350f, 0f, 1f);
@@ -165,7 +194,7 @@ public partial class Audio : Node
         SetLoop(_warn["pull_up"], pull, -8f);
         SetLoop(_warn["stall"], alive && !pull && j.Stalled && !j.OnGround, -11f);
         var lt = j.LockTarget;
-        bool tracking = alive && lt != null && IsInstanceValid(lt) && j.LockTime > 0.8f;
+        bool tracking = alive && lt != null && IsInstanceValid(lt) && lt.Alive && j.LockTime > 0.8f;
         SetLoop(_warn["lock_tone"], tracking, -22f);
     }
 }

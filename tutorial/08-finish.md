@@ -99,24 +99,7 @@ The game reads the ground height from the mesh, so gameplay follows your edits.
 
 ## 8.6 Appendix: where the assets came from
 
-All the assets were made by code, so the project needs no downloads beyond the jet pack. The generator scripts are in the finished project's `scripts/` folder, but **not** in yours, because the game doesn't need them:
-
-| Tool | Made |
-|---|---|
-| `TerrainBaker.cs` | `terrain.glb`: noise-generated hills, vertex colours, 3500 trees |
-| `ModelBuilder.cs` | the vehicle, weapon and airbase models, built from boxes and cylinders |
-| `TextureBaker.cs` | the particle and cloud textures |
-| `SoundBaker.cs` | every sound, synthesized from noise and sine waves |
-| `Tools.cs` (`--export-f18`) | `f18.glb`, cut out of the six-jet pack, scaled to 18.3 m and centred |
-
-To regenerate them, in the finished project:
-
-```bash
-godot --headless --path . res://tools/tools.tscn -- --bake-assets
-godot --headless --path . res://tools/tools.tscn -- --export-f18
-```
-
-⚠️ This **overwrites** the files in `assets/`.
+All the assets except the jet were made by code: the terrain from noise, the vehicles and weapons from boxes and cylinders, and the sounds from noise and sine waves. The F/A-18 was cut out of the six-jet pack and scaled to 18.3 m. Those generator scripts are no longer part of the project, so the files in `assets/` are now the originals. To change one, edit it directly: models in Blender, textures in an image editor, sounds in Audacity. Godot re-imports the file and your change shows up in game.
 
 Next: [Chapter 9: The scripts, file by file](09-scripts.md)
 

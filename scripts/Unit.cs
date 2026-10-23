@@ -39,6 +39,7 @@ public partial class Unit : Node3D, ITarget
     Node3D _turret;
     Node3D _gunPivot;
     readonly List<MeshInstance3D> _parts = new();
+    readonly List<MeshInstance3D> _heat = new();
     readonly List<Node3D> _samRounds = new();
     float _burstT;
     bool _burstOn;
@@ -74,6 +75,26 @@ public partial class Unit : Node3D, ITarget
             if (_gunPivot.FindChild($"Missile{i}", false, false) is Node3D r)
                 _samRounds.Add(r);
         _ammo = _samRounds.Count;
+        AddHeatCopies();
+    }
+
+    /// Gives every part a hot twin that only the targeting pod sees (see Flir).
+    /// It's a child of the part, so it follows turret turns and tossed turrets.
+    void AddHeatCopies()
+    {
+        foreach (var p in _parts)
+        {
+            p.Layers = 1u << (Flir.ColdLayer - 1);
+            var h = new MeshInstance3D
+            {
+                Mesh = p.Mesh,
+                MaterialOverride = Main.HotMat,
+                CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+                Layers = 1u << (Flir.HotLayer - 1),
+            };
+            p.AddChild(h);
+            _heat.Add(h);
+        }
     }
 
     /// Sits the vehicle on the ground and tilts it to the slope.
@@ -159,7 +180,7 @@ public partial class Unit : Node3D, ITarget
             return;
         var rel = jet.Pos - muzzle;
         float d = rel.Length();
-        if (d > 2800f || rel.Y < 25f)
+        if (d > 2200f || rel.Y < 25f)
         {
             _burstOn = false;
             return;
@@ -181,7 +202,7 @@ public partial class Unit : Node3D, ITarget
         if (_burstT <= 0f)
         {
             _burstOn = !_burstOn;
-            _burstT = _burstOn ? Fx.Rand(1.2f, 2.2f) : Fx.Rand(1.5f, 3.0f);
+            _burstT = _burstOn ? Fx.Rand(1.0f, 1.8f) : Fx.Rand(2.5f, 4.5f);
             _burstHeard = false;
         }
         bool aligned = Mathf.Abs(_turret.Rotation.Y - wantYaw) < 0.05f && Mathf.Abs(_gunPivot.Rotation.Z - el) < 0.08f;
@@ -193,14 +214,14 @@ public partial class Unit : Node3D, ITarget
                 var mp = new Vector3(muzzle.X, muzzle.Y, LaneZ);
                 Main.Audio.PlayAt("aaa", mp, -1f, Fx.Rand(0.9f, 1.1f), Main.Audio.SoundDelay(mp));
             }
-            _shotAcc += dt * 18f;
+            _shotAcc += dt * 12f;
             float xdir = _facing * (_turret.Rotation.Y < Mathf.Pi * 0.5f ? 1f : -1f);
             while (_shotAcc >= 1f)
             {
                 _shotAcc -= 1f;
-                float a = _gunPivot.Rotation.Z + Fx.Rand(-0.012f, 0.012f);
+                float a = _gunPivot.Rotation.Z + Fx.Rand(-0.02f, 0.02f);
                 var dv = new Vector2(Mathf.Cos(a) * xdir, Mathf.Sin(a));
-                Main.SpawnRound(muzzle + dv * 3f, dv * v, 1, false, true, ShellKind.Aaa, 4f, LaneZ);
+                Main.SpawnRound(muzzle + dv * 3f, dv * v, 1, false, true, ShellKind.Aaa, 3f, LaneZ);
             }
         }
     }
@@ -228,9 +249,9 @@ public partial class Unit : Node3D, ITarget
         _turret.SetRotY(Mathf.MoveToward(_turret.Rotation.Y, wantYaw, dt * 1.5f));
         float el = Mathf.Clamp(Mathf.Atan2(rel.Y, Mathf.Abs(rel.X)), 0.25f, 1.2f);
         _gunPivot.SetRotZ(Mathf.MoveToward(_gunPivot.Rotation.Z, el, dt * 0.8f));
-        if (_lockT > 2.5f && _cooldown <= 0f && Mathf.Abs(_turret.Rotation.Y - wantYaw) < 0.05f)
+        if (_lockT > 4f && _cooldown <= 0f && Mathf.Abs(_turret.Rotation.Y - wantYaw) < 0.05f)
         {
-            _cooldown = 10f;
+            _cooldown = 15f;
             _ammo--;
             _samRounds[_ammo].Visible = false;
             float xdir = Mathf.Sign(rel.X);
@@ -257,8 +278,13 @@ public partial class Unit : Node3D, ITarget
     void Die(bool byPlayer, Vector2 dir)
     {
         Alive = false;
+        // The pod stays on the wreck instead of jumping to the next target.
+        if (Main.Jet.LockTarget == this)
+            Main.Flir.Manual = true;
         foreach (var p in _parts)
             p.MaterialOverride = Main.CharredMat;
+        foreach (var h in _heat)
+            h.MaterialOverride = Main.WreckHotMat;   // burning wrecks stay warm
         Main.OnUnitKilled(this, byPlayer);
         var p3 = new Vector3(CPos.X, CPos.Y, LaneZ);
         Main.SpawnExplosion(p3, Kind == UnitKind.Truck ? 0.8f : 1f);

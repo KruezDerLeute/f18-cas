@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using Godot;
 
@@ -9,77 +8,16 @@ using Godot;
 /// Gameplay is 2D (x right, y up, everything on z = 0); rendering is full 3D.
 public partial class Game : Node3D
 {
-    public const float BulletK = 2.0e-4f;   // drag constants: a = -k * v * |v| * density
-    public const float ShellK = 3.0e-5f;
-    public const float BombK = 1.1e-4f;
-    public const float FlareK = 2.5e-3f;
-    const int MaxDebris = 140;
-    const int MaxScorch = 60;
-
-    [ExportGroup("Units")]
-    [Export] public PackedScene TankScene;
-    [Export] public PackedScene TruckScene;
-    [Export] public PackedScene AaaScene;
-    [Export] public PackedScene SamScene;
-    [ExportGroup("Weapons")]
-    [Export] public PackedScene MaverickScene;
-    [Export] public PackedScene SamMissileScene;
-    [Export] public PackedScene BombModel;
-    [ExportGroup("Effects")]
-    [Export] public Texture2D ParticleHard;
-    [Export] public Texture2D ParticleSoft;
-
-    /// X of the friendly front line; read from the "FriendlyLine" marker in world.tscn.
-    public float FriendlyLine = 3800f;
-    public Terrain Terrain;
-    public Jet Jet;
-    public Camera3D Camera;
-    public Audio Audio;
-    Hud _hud;
-    Node3D _unitsNode;
-    public readonly List<Unit> Units = new();
-    readonly List<Shell> _shells = new();
-    public readonly List<Missile> Missiles = new();
-    readonly List<RigidBody3D> _debris = new();
-    readonly List<MeshInstance3D> _scorch = new();
-    public readonly List<Message> Messages = new();
-    public int Wave;
-    public float WaveTimer = 8f;
-    public bool WaveActive;
-    public int Score;
-    public int Kills;
-    public int FriendlyKills;
-    public float Shake;
-    float _zoom = 1f;
-    public float CamDist = 220f;
-    Vector2 _camOffset;
-    public bool Paused;
-    public GameState State = GameState.Play;
-    public float StateTime;
-    public bool ShowHelp = true;
-    int _impactCount;
-    DirectionalLight3D _sun;
-
-    BoxMesh _tracerMesh;
-    StandardMaterial3D _tracerMat;
-    StandardMaterial3D _enemyTracerMat;
-    StandardMaterial3D _shellTracerMat;
-    public QuadMesh FireQuad;
-    public QuadMesh SmokeQuad;
-    QuadMesh _sparkQuad;
-    public StandardMaterial3D CharredMat;
-    BoxMesh _debrisMesh;
-    BoxShape3D _debrisShape;
-    StandardMaterial3D _debrisMat;
-    CylinderMesh _scorchMesh;
-    StandardMaterial3D _flareMat;
-    public Gradient FireRamp;
-    public Gradient SmokeRamp;
-    Gradient _dustRamp;
-    Gradient _sparkRamp;
-    public Gradient TrailRamp;
-    Gradient _flakRamp;
-    Curve _growCurve;
+    public override void _UnhandledInput(InputEvent e)
+    {
+        if (e is InputEventMouseButton mb && mb.Pressed)
+        {
+            if (mb.ButtonIndex == MouseButton.WheelUp)
+                _zoom = Mathf.Clamp(_zoom * 0.9f, 0.3f, 3f);
+            else if (mb.ButtonIndex == MouseButton.WheelDown)
+                _zoom = Mathf.Clamp(_zoom * 1.1f, 0.3f, 3f);
+        }
+    }
 
     public override void _Ready()
     {
@@ -91,11 +29,14 @@ public partial class Game : Node3D
         // searches inside instanced scenes such as world.tscn.
         Audio = GetNode<Audio>("Audio");
         Audio.Main = this;
+
         Terrain = (Terrain)FindChild("Terrain", true, false);
         Terrain.Build();
+
         _sun = FindChild("Sun", true, false) as DirectionalLight3D;
         if (FindChild("FriendlyLine", true, false) is Node3D line)
             FriendlyLine = line.GlobalPosition.X;
+
         PlaceGroundProps();
         AddFriendlySmoke();
 
@@ -108,6 +49,9 @@ public partial class Game : Node3D
         Jet = GetNode<Jet>("Jet");
         Jet.Init(this);
         Camera = GetNode<Camera3D>("Camera");
+        Camera.SetCullMaskValue(Flir.HotLayer, false);
+        Flir = new Flir { Main = this };
+        AddChild(Flir);
         _hud = GetNode<Hud>("HudLayer/Hud");
         _hud.Main = this;
 
@@ -116,98 +60,49 @@ public partial class Game : Node3D
         UpdateCamera(1f);
     }
 
-    // ---------------------------------------------------------------- setup
-
-    static void SetupInput()
+    public override void _Process(double delta)
     {
-        var binds = new Dictionary<string, Key[]>
+        float dt = (float)delta;
+        if (Input.IsActionJustPressed("restart"))
         {
-            ["pitch_up"] = new[] { Key.W, Key.Up },
-            ["pitch_down"] = new[] { Key.S, Key.Down },
-            ["throttle_up"] = new[] { Key.Shift, Key.E },
-            ["throttle_down"] = new[] { Key.Ctrl, Key.Q },
-            ["fire_gun"] = new[] { Key.Space },
-            ["drop_bomb"] = new[] { Key.B },
-            ["fire_missile"] = new[] { Key.M },
-            ["cycle_target"] = new[] { Key.T },
-            ["flip"] = new[] { Key.F },
-            ["flares"] = new[] { Key.X },
-            ["gear"] = new[] { Key.G },
-            ["airbrake"] = new[] { Key.Z },
-            ["restart"] = new[] { Key.R },
-            ["help"] = new[] { Key.H },
-            ["pause"] = new[] { Key.P, Key.Escape },
-            ["zoom_in"] = new[] { Key.Equal, Key.KpAdd },
-            ["zoom_out"] = new[] { Key.Minus, Key.KpSubtract },
-        };
-
-        foreach (var (action, keys) in binds)
-        {
-            if (InputMap.HasAction(action))
-                continue;
-            InputMap.AddAction(action);
-            foreach (var k in keys)
-                InputMap.ActionAddEvent(action, new InputEventKey { PhysicalKeycode = k });
+            GetTree().ReloadCurrentScene();
+            return;
         }
-    }
-
-    static StandardMaterial3D ParticleMat(bool additive, Texture2D tex) => new()
-    {
-        ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-        BillboardMode = BaseMaterial3D.BillboardModeEnum.Particles,
-        VertexColorUseAsAlbedo = true,
-        Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
-        BlendMode = additive ? BaseMaterial3D.BlendModeEnum.Add : BaseMaterial3D.BlendModeEnum.Mix,
-        AlbedoTexture = tex,
-        CullMode = BaseMaterial3D.CullModeEnum.Disabled,
-    };
-
-    /// Materials, meshes and colour ramps shared by every effect.
-    void BuildResources()
-    {
-        FireQuad = new QuadMesh { Material = ParticleMat(true, ParticleHard) };
-        SmokeQuad = new QuadMesh { Material = ParticleMat(false, ParticleSoft) };
-        _sparkQuad = new QuadMesh { Size = new Vector2(0.4f, 0.4f), Material = ParticleMat(true, ParticleHard) };
-
-        _tracerMesh = new BoxMesh { Size = new Vector3(7f, 0.22f, 0.22f) };
-        _tracerMat = Fx.Glow(new Color(1.0f, 0.85f, 0.4f), 6f);
-        _enemyTracerMat = Fx.Glow(new Color(1.0f, 0.35f, 0.2f), 6f);
-        _shellTracerMat = Fx.Glow(new Color(1.0f, 0.6f, 0.3f), 4f);
-        _flareMat = Fx.Glow(new Color(1.0f, 0.9f, 0.7f), 10f);
-
-        CharredMat = Fx.Mat(new Color(0.07f, 0.065f, 0.06f), 1f);
-        _debrisMesh = new BoxMesh { Size = new Vector3(0.7f, 0.4f, 0.6f) };
-        _debrisShape = new BoxShape3D { Size = new Vector3(0.7f, 0.4f, 0.6f) };
-        _debrisMat = Fx.Mat(new Color(0.12f, 0.11f, 0.1f), 1f);
-        _scorchMesh = new CylinderMesh
+        if (Input.IsActionJustPressed("pause"))
+            Paused = !Paused;
+        if (Input.IsActionJustPressed("help"))
+            ShowHelp = !ShowHelp;
+        if (Input.IsActionPressed("zoom_in"))
+            _zoom = Mathf.Clamp(_zoom * (1f - dt), 0.3f, 3f);
+        if (Input.IsActionPressed("zoom_out"))
+            _zoom = Mathf.Clamp(_zoom * (1f + dt), 0.3f, 3f);
+        if (!Paused)
         {
-            TopRadius = 1f,
-            BottomRadius = 1f,
-            Height = 0.3f,
-            RadialSegments = 14,
-            Material = Fx.Mat(new Color(0.09f, 0.075f, 0.06f), 1f),
-        };
-
-        FireRamp = Fx.Ramp(new[] { 0f, 0.2f, 0.55f, 1f }, new[] {
-            new Color(1, 0.95f, 0.75f, 1), new Color(1, 0.55f, 0.15f, 0.9f),
-            new Color(0.5f, 0.12f, 0.04f, 0.45f), new Color(0.1f, 0.05f, 0.05f, 0f) });
-        SmokeRamp = Fx.Ramp(new[] { 0f, 0.1f, 0.6f, 1f }, new[] {
-            new Color(0.2f, 0.18f, 0.17f, 0f), new Color(0.2f, 0.19f, 0.18f, 0.75f),
-            new Color(0.33f, 0.32f, 0.31f, 0.45f), new Color(0.5f, 0.5f, 0.5f, 0f) });
-        _dustRamp = Fx.Ramp(new[] { 0f, 0.1f, 1f }, new[] {
-            new Color(0.55f, 0.47f, 0.35f, 0f), new Color(0.55f, 0.47f, 0.35f, 0.7f), new Color(0.6f, 0.55f, 0.45f, 0f) });
-        _sparkRamp = Fx.Ramp(new[] { 0f, 0.5f, 1f }, new[] {
-            new Color(1, 1, 0.8f, 1), new Color(1, 0.6f, 0.2f, 1), new Color(0.6f, 0.2f, 0f, 0) });
-        TrailRamp = Fx.Ramp(new[] { 0f, 0.08f, 1f }, new[] {
-            new Color(1, 0.9f, 0.7f, 0.9f), new Color(0.85f, 0.85f, 0.85f, 0.6f), new Color(0.8f, 0.8f, 0.8f, 0f) });
-        _flakRamp = Fx.Ramp(new[] { 0f, 0.15f, 1f }, new[] {
-            new Color(0.1f, 0.1f, 0.1f, 0f), new Color(0.12f, 0.12f, 0.12f, 0.8f), new Color(0.3f, 0.3f, 0.3f, 0f) });
-        _growCurve = new Curve();
-        _growCurve.AddPoint(new Vector2(0f, 0.35f));
-        _growCurve.AddPoint(new Vector2(0.3f, 0.8f));
-        _growCurve.AddPoint(new Vector2(1f, 1f));
+            foreach (var m in Messages)
+                m.Time -= dt;
+            Messages.RemoveAll(m => m.Time <= 0f);
+        }
+        UpdateCamera(dt);
     }
 
+    public override void _PhysicsProcess(double delta)
+    {
+        if (Paused)
+            return;
+        float dt = (float)delta;
+        StateTime += dt;
+        Jet.Sim(dt);
+        foreach (var u in Units)
+            u.Sim(dt);
+        UpdateShells(dt);
+        foreach (var m in Missiles)
+            m.Sim(dt);
+        Missiles.RemoveAll(m => m.Dead);
+        UpdateWaves(dt);
+        _debris.RemoveAll(d => !IsInstanceValid(d));
+    }
+
+    // ---------------------------------------------------------------- setup
     /// Drops every child of the "GroundProps" node onto the terrain, so you can
     /// place props in the editor by x/z alone.
     void PlaceGroundProps()
@@ -329,7 +224,7 @@ public partial class Game : Node3D
         _shells.Add(s);
     }
 
-    public void SpawnBomb(Vector2 p, Vector2 v)
+    public void SpawnBomb(Vector2 p, Vector2 v, Unit laserTarget = null)
     {
         var s = new Shell
         {
@@ -344,6 +239,7 @@ public partial class Game : Node3D
             Damage = 520f,
             Blast = 22f,
             ArmTime = 1f,   // fuze arms after 1 s of fall
+            Target = laserTarget,
             Node = BombModel.Instantiate<Node3D>(),
         };
         Audio.Play("release", -4f, Fx.Rand(0.95f, 1.05f));
@@ -390,22 +286,6 @@ public partial class Game : Node3D
 
     // ---------------------------------------------------------------- simulation
 
-    public override void _PhysicsProcess(double delta)
-    {
-        if (Paused)
-            return;
-        float dt = (float)delta;
-        StateTime += dt;
-        Jet.Sim(dt);
-        foreach (var u in Units)
-            u.Sim(dt);
-        UpdateShells(dt);
-        foreach (var m in Missiles)
-            m.Sim(dt);
-        Missiles.RemoveAll(m => m.Dead);
-        UpdateWaves(dt);
-        _debris.RemoveAll(d => !IsInstanceValid(d));
-    }
 
     static bool CanHit(Shell s, Unit u)
     {
@@ -426,6 +306,53 @@ public partial class Game : Node3D
         return (a + ab * t).DistanceTo(p);
     }
 
+    /// GBU-12 style guidance: steers the bomb's flight path at the laser spot
+    /// with its fins, bleeding speed as it turns. Fin force grows with airspeed
+    /// and air density (~2.5 g at 200 m/s at sea level), so a slow bomb can't
+    /// stretch its glide much. If the jet stops lasing that target the bomb goes
+    /// ballistic for good.
+    void GuideBomb(Shell s, float dt)
+    {
+        var t = s.Target;
+        if (!Jet.Lasing || Jet.LockTarget != t)
+        {
+            s.Target = null;
+            if (t != null && IsInstanceValid(t) && t.Alive)
+                Msg("LASER LOST - BOMB BALLISTIC", new Color(1, 0.75f, 0.2f), 2f);
+            return;
+        }
+        if (s.Age < 0.6f)   // clear of the jet before the fins move
+            return;
+        var los = t.CPos - s.Pos;
+        float sp = s.Vel.Length();
+        float rho = Mathf.Exp(-Mathf.Max(s.Pos.Y, 0f) / 8500f);
+        float maxAcc = Mathf.Min(25f * (sp / 200f) * (sp / 200f) * rho, 40f);
+        var dir = s.Vel / Mathf.Max(sp, 1f);
+        var left = new Vector2(-dir.Y, dir.X);   // 90 degrees anticlockwise from the flight path
+        float err = Mathf.Wrap(los.Angle() - dir.Angle(), -Mathf.Pi, Mathf.Pi);
+        // Turn towards the line of sight, plus cancel gravity's pull across the flight path
+        // so the bomb flies the line instead of sagging under it.
+        float acc = Mathf.Clamp(err * sp * 2.5f + 9.81f * dir.X, -maxAcc, maxAcc);
+        s.Vel += left * acc * dt;
+        s.Vel -= dir * Mathf.Abs(acc) * 0.08f * dt;   // induced drag
+        s.Z = Mathf.MoveToward(s.Z, t.LaneZ, dt * 15f);
+    }
+
+    /// Seconds until the first laser-guided bomb in flight reaches its target, or -1 if none.
+    public float LgbTimeToImpact()
+    {
+        float best = -1f;
+        foreach (var s in _shells)
+        {
+            if (s.Dead || s.Kind != ShellKind.Bomb || s.Target == null)
+                continue;
+            float t = s.Pos.DistanceTo(s.Target.CPos) / Mathf.Max(s.Vel.Length(), 1f);
+            if (best < 0f || t < best)
+                best = t;
+        }
+        return best;
+    }
+
     void UpdateShells(float dt)
     {
         for (int i = 0; i < _shells.Count; i++)
@@ -433,6 +360,8 @@ public partial class Game : Node3D
             var s = _shells[i];
             if (s.Dead)
                 continue;
+            if (s.Kind == ShellKind.Bomb && s.Target != null)
+                GuideBomb(s, dt);
             s.Step(dt);
             if (s.Kind == ShellKind.Flare)
             {
@@ -534,7 +463,7 @@ public partial class Game : Node3D
             case ShellKind.Bomb:
                 if (s.Age >= s.ArmTime)
                 {
-                    Explode(p, 0f, s.Blast, s.Damage, true, 1f);
+                    Explode(p, s.Z, s.Blast, s.Damage, true, 1f);
                     Scorch(p.X, s.Blast * 0.5f);
                 }
                 else
@@ -621,7 +550,7 @@ public partial class Game : Node3D
     }
 
     /// Adds a one-shot emitter at `at`, starts it and frees it later.
-    void FireOnce(CpuParticles3D p, Vector3 at, float freeAfter)
+    public void FireOnce(CpuParticles3D p, Vector3 at, float freeAfter)
     {
         p.Position = at;
         AddChild(p);
@@ -871,41 +800,6 @@ public partial class Game : Node3D
 
     // ---------------------------------------------------------------- frame
 
-    public override void _UnhandledInput(InputEvent e)
-    {
-        if (e is InputEventMouseButton mb && mb.Pressed)
-        {
-            if (mb.ButtonIndex == MouseButton.WheelUp)
-                _zoom = Mathf.Clamp(_zoom * 0.9f, 0.3f, 3f);
-            else if (mb.ButtonIndex == MouseButton.WheelDown)
-                _zoom = Mathf.Clamp(_zoom * 1.1f, 0.3f, 3f);
-        }
-    }
-
-    public override void _Process(double delta)
-    {
-        float dt = (float)delta;
-        if (Input.IsActionJustPressed("restart"))
-        {
-            GetTree().ReloadCurrentScene();
-            return;
-        }
-        if (Input.IsActionJustPressed("pause"))
-            Paused = !Paused;
-        if (Input.IsActionJustPressed("help"))
-            ShowHelp = !ShowHelp;
-        if (Input.IsActionPressed("zoom_in"))
-            _zoom = Mathf.Clamp(_zoom * (1f - dt), 0.3f, 3f);
-        if (Input.IsActionPressed("zoom_out"))
-            _zoom = Mathf.Clamp(_zoom * (1f + dt), 0.3f, 3f);
-        if (!Paused)
-        {
-            foreach (var m in Messages)
-                m.Time -= dt;
-            Messages.RemoveAll(m => m.Time <= 0f);
-        }
-        UpdateCamera(dt);
-    }
 
     /// Side-on camera: pulls back with speed and height, leads the velocity and
     /// tries to keep the ground in frame.

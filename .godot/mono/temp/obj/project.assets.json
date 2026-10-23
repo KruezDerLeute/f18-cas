@@ -88,19 +88,19 @@
     ]
   },
   "packageFolders": {
-    "/home/kaminnit/.nuget/packages/": {}
+    "/home/kami/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/kaminnit/Documents/3rd_year/game/f18-cas/F18Cas.csproj",
+      "projectUniqueName": "/home/kami/Documents/game/f18-cas/F18Cas.csproj",
       "projectName": "F18Cas",
-      "projectPath": "/home/kaminnit/Documents/3rd_year/game/f18-cas/F18Cas.csproj",
-      "packagesPath": "/home/kaminnit/.nuget/packages/",
-      "outputPath": "/home/kaminnit/Documents/3rd_year/game/f18-cas/.godot/mono/temp/obj/",
+      "projectPath": "/home/kami/Documents/game/f18-cas/F18Cas.csproj",
+      "packagesPath": "/home/kami/.nuget/packages/",
+      "outputPath": "/home/kami/Documents/game/f18-cas/.godot/mono/temp/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/home/kaminnit/.nuget/NuGet/NuGet.Config"
+        "/home/kami/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -162,11 +162,11 @@
         "downloadDependencies": [
           {
             "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[8.0.31, 8.0.31]"
+            "version": "[8.0.32, 8.0.32]"
           },
           {
             "name": "Microsoft.NETCore.App.Ref",
-            "version": "[8.0.31, 8.0.31]"
+            "version": "[8.0.32, 8.0.32]"
           }
         ],
         "frameworkReferences": {
@@ -174,7 +174,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/10.0.112/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/10.0.113/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

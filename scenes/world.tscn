@@ -1,11 +1,11 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene format=3 uid="uid://cn0sowoh1pxfb"]
 
-[ext_resource type="Script" path="res://scripts/Terrain.cs" id="1_terrain"]
+[ext_resource type="Script" uid="uid://lngxs7y5laqf" path="res://scripts/Terrain.cs" id="1_terrain"]
 [ext_resource type="PackedScene" uid="uid://bg3j0osiq0qel" path="res://assets/terrain.glb" id="2_terrain_glb"]
 [ext_resource type="PackedScene" uid="uid://epc3wrg0m7as" path="res://assets/models/airbase.glb" id="3_airbase"]
-[ext_resource type="PackedScene" path="res://assets/models/sandbag.glb" id="4_sandbag"]
-[ext_resource type="Script" path="res://scripts/Clouds.cs" id="5_clouds"]
-[ext_resource type="Texture2D" path="res://assets/textures/cloud.png" id="6_cloud"]
+[ext_resource type="PackedScene" uid="uid://cjvtuhgc4mxm1" path="res://assets/models/sandbag.glb" id="4_sandbag"]
+[ext_resource type="Script" uid="uid://lemnsl0t3hhc" path="res://scripts/Clouds.cs" id="5_clouds"]
+[ext_resource type="Texture2D" uid="uid://bcxkn7gu2ct7y" path="res://assets/textures/cloud.png" id="6_cloud"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
 sky_top_color = Color(0.22, 0.42, 0.78, 1)
@@ -29,53 +29,53 @@ fog_light_color = Color(0.66, 0.74, 0.85, 1)
 fog_density = 9e-05
 fog_sky_affect = 0.0
 
-[node name="World" type="Node3D"]
+[node name="World" type="Node3D" unique_id=1024657313]
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=554524829]
 environment = SubResource("Env")
 
-[node name="Sun" type="DirectionalLight3D" parent="."]
-rotation = Vector3(-0.837758, -0.610865, 0)
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1874035944]
+transform = Transform3D(0.8191522, 0.4262502, -0.3837974, 0, 0.6691306, 0.7431448, 0.5735762, -0.6087487, 0.5481198, 0, 0, 0)
 light_energy = 1.2
 shadow_enabled = true
 directional_shadow_max_distance = 1500.0
 
-[node name="Terrain" type="Node3D" parent="."]
+[node name="Terrain" type="Node3D" parent="." unique_id=494938295]
 script = ExtResource("1_terrain")
 
-[node name="TerrainMesh" parent="Terrain" instance=ExtResource("2_terrain_glb")]
+[node name="TerrainMesh" parent="Terrain" unique_id=1914953022 instance=ExtResource("2_terrain_glb")]
 
-[node name="Airbase" parent="." instance=ExtResource("3_airbase")]
+[node name="Airbase" parent="." unique_id=166010616 instance=ExtResource("3_airbase")]
 
-[node name="FriendlyLine" type="Marker3D" parent="."]
-position = Vector3(3800, 0, 0)
+[node name="FriendlyLine" type="Marker3D" parent="." unique_id=814534914]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3800, 0, 0)
 
-[node name="GroundProps" type="Node3D" parent="."]
+[node name="GroundProps" type="Node3D" parent="." unique_id=224832523]
 
-[node name="Sandbag1" parent="GroundProps" instance=ExtResource("4_sandbag")]
-position = Vector3(3840, 0, 12)
+[node name="Sandbag1" parent="GroundProps" unique_id=1877600351 instance=ExtResource("4_sandbag")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3840, 0, 12)
 
-[node name="Sandbag2" parent="GroundProps" instance=ExtResource("4_sandbag")]
-position = Vector3(3845, 0, 12)
+[node name="Sandbag2" parent="GroundProps" unique_id=791016641 instance=ExtResource("4_sandbag")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3845, 0, 12)
 
-[node name="Sandbag3" parent="GroundProps" instance=ExtResource("4_sandbag")]
-position = Vector3(3850, 0, 12)
+[node name="Sandbag3" parent="GroundProps" unique_id=302698660 instance=ExtResource("4_sandbag")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3850, 0, 12)
 
-[node name="Sandbag4" parent="GroundProps" instance=ExtResource("4_sandbag")]
-position = Vector3(3855, 0, 12)
+[node name="Sandbag4" parent="GroundProps" unique_id=726926205 instance=ExtResource("4_sandbag")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3855, 0, 12)
 
-[node name="Sandbag5" parent="GroundProps" instance=ExtResource("4_sandbag")]
-position = Vector3(3860, 0, 12)
+[node name="Sandbag5" parent="GroundProps" unique_id=305461595 instance=ExtResource("4_sandbag")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3860, 0, 12)
 
-[node name="Sandbag6" parent="GroundProps" instance=ExtResource("4_sandbag")]
-position = Vector3(3865, 0, 12)
+[node name="Sandbag6" parent="GroundProps" unique_id=1369164422 instance=ExtResource("4_sandbag")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3865, 0, 12)
 
-[node name="Sandbag7" parent="GroundProps" instance=ExtResource("4_sandbag")]
-position = Vector3(3870, 0, 12)
+[node name="Sandbag7" parent="GroundProps" unique_id=1047939858 instance=ExtResource("4_sandbag")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3870, 0, 12)
 
-[node name="Sandbag8" parent="GroundProps" instance=ExtResource("4_sandbag")]
-position = Vector3(3875, 0, 12)
+[node name="Sandbag8" parent="GroundProps" unique_id=887058947 instance=ExtResource("4_sandbag")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3875, 0, 12)
 
-[node name="Clouds" type="Node3D" parent="."]
+[node name="Clouds" type="Node3D" parent="." unique_id=854417876]
 script = ExtResource("5_clouds")
 Texture = ExtResource("6_cloud")

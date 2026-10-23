@@ -18,6 +18,8 @@ public class Shell : ITarget
 	public float Damage;
 	public float Blast;
 	public float ArmTime;
+	/// Laser-guided bombs: the unit the jet is lasing. Null = falls ballistic.
+	public Unit Target;
 	public bool Dead;
 	public Node3D Node;
 

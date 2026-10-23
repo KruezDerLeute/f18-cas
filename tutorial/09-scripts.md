@@ -17,8 +17,7 @@ The files are in reading order: small helpers first, then the things that move, 
 | 9.9 | `Game.cs` | the main loop, spawning, hits, effects, waves and camera |
 | 9.10 | `Hud.cs` | everything drawn on screen |
 | 9.11 | `Audio.cs` | sound |
-| 9.12 | the tool scripts | the code that generated the assets |
-| 9.13 | C# quick reference | the language features used, in one table |
+| 9.12 | C# quick reference | the language features used, in one table |
 
 ---
 
@@ -1004,23 +1003,7 @@ p.Finished += p.QueueFree;   // delete itself when done
 
 ---
 
-## 9.12 The tool scripts
-
-These are in the finished project only. They made the files in `assets/`, and the game never runs them. You don't need them, but they're good examples of generating content with code.
-
-| File | How it works |
-|---|---|
-| `Tools.cs` | A `Node` script for `tools/tools.tscn`. `_Ready` reads the command-line arguments (`OS.GetCmdlineUserArgs()`), runs the requested job, and quits with exit code 0 or 1. `ExportF18()` loads the six-jet model pack, deletes every child whose name doesn't start with `F-18`, measures the result's bounding box (`Aabb`), scales it to 18.3 m, centres it, prints the measurements used for the markers in chapter 3, and saves it as `f18.glb`. |
-| `AssetBaker.cs` | `BakeAll()` calls each generator and saves the result. `ExportGlb()` writes a node tree to a `.glb` with Godot's `GltfDocument`. It first moves each `MaterialOverride` onto its mesh, because glTF stores materials on meshes. |
-| `Assets.cs` | Loads a model, texture or sound by name, or, if the file doesn't exist yet, builds it in memory with the matching generator and prints a warning. The game scripts in this tutorial load assets directly and don't use it. |
-| `TerrainBaker.cs` | Builds the terrain from `FastNoiseLite` noise. `RawHeight(x)` is the profile along the lane: rough hills, blended (`Band`, a smooth 0–1 window) into gentler ground over the battlefield, and flat at height 40 over the airbase. `Height3(x, z)` adds tall hills behind the lane, growing with distance. `GroundColor` picks grass, dry grass, the dirt road, rock on steep slopes and snow up high. Mesh rows are dense near z = 0 and sparse far away, to save triangles. |
-| `ModelBuilder.cs` | Builds every vehicle, weapon and building from `Fx.Box`, `Fx.Cyl` and `Fx.Sphere`. It names the parts the game needs (`Turret`, `GunPivot`, `Missile0`–`3`). |
-| `TextureBaker.cs` | `Radial(soft)` paints a 64 × 64 white dot whose transparency fades towards the edge: hard for fire, soft for smoke and clouds. |
-| `SoundBaker.cs` | Synthesizes each sound as an array of samples, then packs them into a 16-bit WAV. Explosions are random noise smoothed by low-pass filters (`lp += k * (w - lp)`), shaped by an envelope that rises quickly and decays slowly (`Exp(-t * decay)`). Warning tones are sine waves switched on and off. |
-
----
-
-## 9.13 C# quick reference
+## 9.12 C# quick reference
 
 The language features this project uses, and where to see them:
 

@@ -24,11 +24,11 @@ Ignition = 0.0
 Motor = 3.5
 Boost = 190.0
 DragK = 0.00012
-MaxG = 25.0
+MaxG = 18.0
 Nav = 3.5
 Life = 13.0
 Prox = 14.0
-Damage = 70.0
+Damage = 50.0
 
 [node name="Model" parent="." instance=ExtResource("2_model")]
 

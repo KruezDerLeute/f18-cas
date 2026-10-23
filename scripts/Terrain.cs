@@ -15,13 +15,13 @@ public partial class Terrain : Node3D
     public const float RunwayX0 = 300f;
     public const float RunwayX1 = 2700f;
     public const float BaseH = 40f;
-    public static int Count => (int)((XMax - XMin) / Step) + 1;
+    public static int Count = (int)((XMax - XMin) / Step) + 1;
 
     // Collision only for the band around the lane (debris, tossed turrets).
     const float CollisionZMin = -95f;
     const float CollisionZMax = 100f;
 
-    readonly float[] _table = new float[Count];
+    readonly float[] _table = new float[Count]; // 2201 items
 
     /// Ground height on the gameplay lane, linearly interpolated between 10 m samples.
     public float Height(float x)
@@ -31,7 +31,7 @@ public partial class Terrain : Node3D
         return Mathf.Lerp(_table[i], _table[i + 1], f - i);
     }
 
-    public bool OnRunway(float x) => x > RunwayX0 && x < RunwayX1;
+    public bool OnRunway(float x) { return x > RunwayX0 && x < RunwayX1; }
 
     /// Reads the ground heights and builds collision from the "TerrainMesh"
     /// child (the terrain.glb you placed under this node in world.tscn).
@@ -46,6 +46,7 @@ public partial class Terrain : Node3D
 
         System.Array.Fill(_table, float.NegativeInfinity);
         var collision = new List<Vector3>();
+
         foreach (var node in scene.FindChildren("*", "MeshInstance3D", true, false))
         {
             var mi = (MeshInstance3D)node;
@@ -55,6 +56,7 @@ public partial class Terrain : Node3D
                     m.VertexColorUseAsAlbedo = true;
             if (!mi.Name.ToString().Contains("Ground"))
                 continue;   // trees don't count as ground
+
             var xf = mi.GlobalTransform;
             var faces = mi.Mesh.GetFaces();
             for (int t = 0; t + 2 < faces.Length; t += 3)

@@ -69,8 +69,6 @@ cp Types.cs Fx.cs Terrain.cs Clouds.cs Shell.cs Jet.cs Unit.cs Missile.cs Audio.
 
 Replace `/path/to/your/project/` with your project folder. If you already have a `scripts/` folder from an earlier attempt, **empty it first**, so no old versions are left behind.
 
-> The finished project also contains `Assets.cs`, `Tools.cs`, `AssetBaker.cs`, `ModelBuilder.cs`, `TerrainBaker.cs`, `TextureBaker.cs` and `SoundBaker.cs`. Those are **tools that generated the assets**; the game doesn't use them, so don't copy them. Chapter 8 mentions them for the curious.
-
 **What you've got:**
 
 ```
