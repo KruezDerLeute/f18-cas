@@ -29,6 +29,13 @@ Nav = 3.0
 Life = 35.0
 Prox = 4.5
 Damage = 450.0
+TrailAmount = 1500
+TrailLife = 6.0
+TrailScale = Vector2(10, 20)
+TrailLinger = 4.0
+TrailOpacity = 1.6
+TrailSpread = 6.0
+TrailRadius = 2.5
 
 [node name="Model" parent="." instance=ExtResource("2_model")]
 

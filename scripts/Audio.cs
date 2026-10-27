@@ -115,7 +115,7 @@ public partial class Audio : Node
         {
             Stream = _sounds[sound],
             VolumeDb = volDb,
-            PitchScale = pitch,
+            PitchScale = pitch * Doppler(pos),
             AttenuationModel = AudioStreamPlayer3D.AttenuationModelEnum.InverseDistance,
             UnitSize = 160f,
             MaxDb = 6f,
@@ -125,6 +125,21 @@ public partial class Audio : Node
         AddChild(p);
         p.Play();
         p.Finished += p.QueueFree;
+    }
+
+    /// Pitch shift from the jet (where you hear from) moving relative to a
+    /// still sound source: higher flying towards it, lower flying away.
+    float Doppler(Vector3 pos)
+    {
+        if (Main?.Jet == null || !Main.Jet.Alive)
+            return 1f;
+        var j = Main.Jet;
+        var toSrc = pos - new Vector3(j.Pos.X, j.Pos.Y, 0f);
+        float d = toSrc.Length();
+        if (d < 1f)
+            return 1f;
+        float vr = new Vector3(j.Vel.X, j.Vel.Y, 0f).Dot(toSrc / d);   // closing speed
+        return Mathf.Clamp((SpeedOfSound + vr) / SpeedOfSound, 0.5f, 2f);
     }
 
     /// Seconds until a sound made at pos now catches the moving jet (capped),
@@ -182,9 +197,11 @@ public partial class Audio : Node
         _ab.VolumeDb = Db(ab * 0.75f * rear);
         _ab.PitchScale = 0.9f + ab * 0.15f;
         float spd = alive ? j.Vel.Length() : 0f;
-        float sf = Mathf.Clamp(spd / 350f, 0f, 1f);
-        _wind.VolumeDb = Db(sf * sf * 0.4f + sf * 0.05f);
-        _wind.PitchScale = 0.7f + sf * 0.6f;
+        float sf = Mathf.Clamp(spd / 350f, 0f, 1.3f);
+        // Rushing air: rises steeply with speed and roars louder near the ground.
+        float lowRush = 1f + 0.6f * (1f - Mathf.SmoothStep(30f, 400f, j.Agl)) * sf;
+        _wind.VolumeDb = Db((sf * sf * 0.6f + sf * 0.05f) * lowRush);
+        _wind.PitchScale = 0.6f + sf * 0.85f;
         SetLoop(_gun, alive && j.Firing, -3f);
 
         bool missile = Main.SamInbound();

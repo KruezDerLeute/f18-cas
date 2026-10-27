@@ -1,4 +1,3 @@
-res://scripts/Game.cs
 res://scripts/Hud.cs
 res://scripts/Audio.cs
 res://scripts/Missile.cs
@@ -6,6 +5,7 @@ res://scripts/Unit.cs
 res://scripts/Jet.cs
 res://scripts/Clouds.cs
 res://scripts/Terrain.cs
-res://scenes/weapons/sam_missile.tscn
-res://scenes/world.tscn
+res://scripts/Game.cs
 res://scripts/Flir.cs
+res://scenes/weapons/maverick.tscn
+res://scripts/Foreground.cs

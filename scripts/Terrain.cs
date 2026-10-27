@@ -23,12 +23,56 @@ public partial class Terrain : Node3D
 
     readonly float[] _table = new float[Count]; // 2201 items
 
+    // Ground triangles inside the collision band, bucketed by x, for HeightAt.
+    const float CellW = 50f;
+    readonly List<Vector3>[] _cells = new List<Vector3>[(int)((XMax - XMin) / CellW) + 1];
+
     /// Ground height on the gameplay lane, linearly interpolated between 10 m samples.
     public float Height(float x)
     {
         float f = (Mathf.Clamp(x, XMin, XMax - Step) - XMin) / Step;
         int i = (int)f;
         return Mathf.Lerp(_table[i], _table[i + 1], f - i);
+    }
+
+    /// Ground height anywhere inside the collision band (|z| up to ~100 m),
+    /// read from the mesh itself. Falls back to the lane height elsewhere.
+    public float HeightAt(float x, float z)
+    {
+        int ci = (int)((Mathf.Clamp(x, XMin, XMax) - XMin) / CellW);
+        float best = float.NegativeInfinity;
+        var tris = _cells[ci];
+        if (tris != null)
+        {
+            var q = new Vector2(x, z);
+            for (int t = 0; t + 2 < tris.Count; t += 3)
+            {
+                Vector3 a = tris[t], b = tris[t + 1], c = tris[t + 2];
+                var bc = Geometry2D.IsPointInPolygon(q, new[] { new Vector2(a.X, a.Z), new Vector2(b.X, b.Z), new Vector2(c.X, c.Z) });
+                if (!bc)
+                    continue;
+                // Height from the triangle's plane.
+                var n = (b - a).Cross(c - a);
+                if (Mathf.Abs(n.Y) < 1e-6f)
+                    continue;
+                float y = a.Y - (n.X * (x - a.X) + n.Z * (z - a.Z)) / n.Y;
+                best = Mathf.Max(best, y);
+            }
+        }
+        return float.IsNegativeInfinity(best) ? Height(x) : best;
+    }
+
+    void AddToCells(Vector3 a, Vector3 b, Vector3 c)
+    {
+        float x0 = Mathf.Min(a.X, Mathf.Min(b.X, c.X));
+        float x1 = Mathf.Max(a.X, Mathf.Max(b.X, c.X));
+        int i0 = Mathf.Clamp((int)((x0 - XMin) / CellW), 0, _cells.Length - 1);
+        int i1 = Mathf.Clamp((int)((x1 - XMin) / CellW), 0, _cells.Length - 1);
+        for (int i = i0; i <= i1; i++)
+        {
+            _cells[i] ??= new List<Vector3>();
+            _cells[i].AddRange(new[] { a, b, c });
+        }
     }
 
     public bool OnRunway(float x) { return x > RunwayX0 && x < RunwayX1; }
@@ -66,7 +110,10 @@ public partial class Terrain : Node3D
                 var c = xf * faces[t + 2];
                 SampleLane(a, b, c);
                 if (InBand(a) && InBand(b) && InBand(c))
+                {
                     collision.AddRange(new[] { a, b, c });
+                    AddToCells(a, b, c);
+                }
             }
         }
         FillGaps();

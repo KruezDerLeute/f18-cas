@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://b1h2pkv23714w" path="res://scripts/Game.cs" id="1_game"]
 [ext_resource type="PackedScene" path="res://scenes/world.tscn" id="2_world"]
-[ext_resource type="PackedScene" path="res://scenes/jet.tscn" id="3_jet"]
+[ext_resource type="PackedScene" uid="uid://4o8rgsunfkbp" path="res://scenes/jet.tscn" id="3_jet"]
 [ext_resource type="PackedScene" path="res://scenes/units/t72.tscn" id="5_t72"]
 [ext_resource type="PackedScene" path="res://scenes/units/truck.tscn" id="6_truck"]
 [ext_resource type="PackedScene" path="res://scenes/units/zsu23.tscn" id="7_zsu23"]
@@ -35,16 +35,16 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1500, 650, 0)
 
 [node name="Units" type="Node3D" parent="." unique_id=1925196713]
 
-[node name="M1A2_1" parent="Units" instance=ExtResource("16_m1a2")]
+[node name="M1A2_1" parent="Units" unique_id=1228320251 instance=ExtResource("16_m1a2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3780, 0, -8)
 
-[node name="M1A2_2" parent="Units" instance=ExtResource("16_m1a2")]
+[node name="M1A2_2" parent="Units" unique_id=1029993989 instance=ExtResource("16_m1a2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3740, 0, 6)
 
-[node name="M1A2_3" parent="Units" instance=ExtResource("16_m1a2")]
+[node name="M1A2_3" parent="Units" unique_id=834290702 instance=ExtResource("16_m1a2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3700, 0, -2)
 
-[node name="M1A2_4" parent="Units" instance=ExtResource("16_m1a2")]
+[node name="M1A2_4" parent="Units" unique_id=109819237 instance=ExtResource("16_m1a2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3650, 0, 9)
 
 [node name="Camera" type="Camera3D" parent="." unique_id=574672366]

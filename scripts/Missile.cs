@@ -25,6 +25,18 @@ public partial class Missile : Node3D
     /// Proximity fuze radius, metres.
     [Export] public float Prox = 14f;
     [Export] public float Damage = 70f;
+    /// Smoke trail: puffs alive at once, seconds each puff lasts, puff size
+    /// (min, max) and seconds it keeps smoking after the motor burns out.
+    [Export] public int TrailAmount = 160;
+    [Export] public float TrailLife = 2.6f;
+    [Export] public Vector2 TrailScale = new(1.6f, 3.4f);
+    [Export] public float TrailLinger = 1f;
+    /// How fast the puffs drift outward (m/s) and the radius they start
+    /// scattered over (m): both make the trail wider.
+    [Export] public float TrailSpread = 1f;
+    [Export] public float TrailRadius = 0f;
+    /// Multiplies the trail's opacity (1 = the shared trail look).
+    [Export] public float TrailOpacity = 1f;
 
     public Game Main;
     public Vector2 Pos;
@@ -45,8 +57,18 @@ public partial class Missile : Node3D
         Target = tgt;
         LaneZ = z;
         _flame = GetNode<Node3D>("Flame");
-        _trail = Main.MakeParticles(Main.SmokeQuad, 160, 2.6f, new Vector2(0f, 1f), new Vector2(1.6f, 3.4f),
-                Main.TrailRamp, new Vector3(0, 0.8f, 0), 0.5f, false, 20f);
+        var ramp = Main.TrailRamp;
+        if (TrailOpacity != 1f)
+        {
+            ramp = (Gradient)ramp.Duplicate();
+            for (int i = 0; i < ramp.GetPointCount(); i++)
+            {
+                var c = ramp.GetColor(i);
+                ramp.SetColor(i, new Color(c, Mathf.Min(c.A * TrailOpacity, 1f)));
+            }
+        }
+        _trail = Main.MakeParticles(Main.SmokeQuad, TrailAmount, TrailLife, new Vector2(0f, TrailSpread), TrailScale,
+                ramp, new Vector3(0, 0.8f, 0), 0.5f, false, 180f, null, TrailRadius);
         _trail.Emitting = false;
         Main.AddChild(_trail);
         Position = new Vector3(Pos.X, Pos.Y, LaneZ);
@@ -72,7 +94,7 @@ public partial class Missile : Node3D
         _flame.Visible = b;
         _flame.Scale = new Vector3(1, Fx.Rand(0.8f, 1.2f), 1);
         _trail.Position = Position - new Vector3(Mathf.Cos(Rotation.Z), Mathf.Sin(Rotation.Z), 0) * 2f;
-        _trail.Emitting = b || (_age > Ignition && _age < Ignition + Motor + 1f);
+        _trail.Emitting = b || (_age > Ignition && _age < Ignition + Motor + TrailLinger);
     }
 
     /// A flare in front of a SAM's seeker has a one-in-three chance of stealing it.
@@ -141,7 +163,7 @@ public partial class Missile : Node3D
         Dead = true;
         _trail.Emitting = false;
         var trail = _trail;
-        GetTree().CreateTimer(3.0).Timeout += () =>
+        GetTree().CreateTimer(TrailLife + 0.5f).Timeout += () =>
         {
             if (IsInstanceValid(trail))
                 trail.QueueFree();

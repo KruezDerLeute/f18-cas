@@ -32,6 +32,7 @@ public partial class Game : Node3D
 
         Terrain = (Terrain)FindChild("Terrain", true, false);
         Terrain.Build();
+        (FindChild("Foreground", true, false) as Foreground)?.Build(Terrain);
 
         _sun = FindChild("Sun", true, false) as DirectionalLight3D;
         if (FindChild("FriendlyLine", true, false) is Node3D line)
@@ -49,6 +50,7 @@ public partial class Game : Node3D
         Jet = GetNode<Jet>("Jet");
         Jet.Init(this);
         Camera = GetNode<Camera3D>("Camera");
+        _baseFov = Camera.Fov;
         Camera.SetCullMaskValue(Flir.HotLayer, false);
         Flir = new Flir { Main = this };
         AddChild(Flir);
@@ -801,17 +803,25 @@ public partial class Game : Node3D
     // ---------------------------------------------------------------- frame
 
 
-    /// Side-on camera: pulls back with speed and height, leads the velocity and
-    /// tries to keep the ground in frame.
+    /// Side-on camera: pulls back with height (only a little with speed, so the
+    /// ground rushes past faster the faster you go), leads the velocity and
+    /// tries to keep the ground in frame. The view widens with speed and
+    /// buffets when fast and low.
     void UpdateCamera(float dt)
     {
         var p = Jet.Pos;
         var v = Jet.Alive ? Jet.Vel : Vector2.Zero;
+        float spd = v.Length();
         float gh = Terrain.Height(p.X);
         float agl = Mathf.Max(p.Y - gh, 0f);
-        float want = Mathf.Max(150f + v.Length() * 0.32f, agl * 1.25f + 80f);
+        float want = Mathf.Max(150f + spd * 0.1f, agl * 1.25f + 80f);
         want = Mathf.Clamp(want, 110f, 2400f) * _zoom;
         CamDist = Mathf.Lerp(CamDist, want, 1f - Mathf.Exp(-dt * 1.5f));
+        float fovWant = _baseFov + 14f * Mathf.SmoothStep(200f, 410f, spd);
+        Camera.Fov = Mathf.Lerp(Camera.Fov, fovWant, 1f - Mathf.Exp(-dt * 2f));
+        float buffet = Mathf.SmoothStep(220f, 380f, spd) * (1f - Mathf.SmoothStep(60f, 300f, agl));
+        if (!Paused)
+            Shake = Mathf.Max(Shake, buffet * 0.18f);
         float halfH = CamDist * Mathf.Tan(Mathf.DegToRad(Camera.Fov * 0.5f));
         var lead = v * 0.45f;
         if (lead.Length() > halfH * 0.9f)

@@ -49,6 +49,7 @@ public partial class Game : Node3D
     public float Shake;
     float _zoom = 1f;
     public float CamDist = 220f;
+    float _baseFov = 50f;
     Vector2 _camOffset;
     public bool Paused;
     public GameState State = GameState.Play;

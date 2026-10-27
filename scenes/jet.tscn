@@ -101,6 +101,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, -1.73, -4.57)
 [node name="Maverick1" parent="Roll" unique_id=89019066 instance=ExtResource("4_agm65")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, -1.73, 4.57)
 
+[node name="Maverick2" parent="Roll" unique_id=1734502219 instance=ExtResource("4_agm65")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, -1.6, -5.55)
+
+[node name="Maverick3" parent="Roll" unique_id=1209847731 instance=ExtResource("4_agm65")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, -1.6, 5.55)
+
 [node name="VaporL" type="Marker3D" parent="Roll" unique_id=491604586]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, -1.03, -6.32)
 

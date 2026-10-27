@@ -32,7 +32,7 @@ public partial class Jet : Node3D, ITarget
     const float GearH = 3.4f;           // jet centre above the wheels, gear down
     const float TailStrike = 0.40f;     // rad (~23 deg): a higher nose at touchdown drags the tail
     const int MaxBombs = 4;
-    const int MaxMavs = 2;
+    const int MaxMavs = 4;
     const int MaxAmmo = 578;
     const int MaxFlares = 130;
     const float Length = 18.3f;
@@ -89,11 +89,12 @@ public partial class Jet : Node3D, ITarget
     OmniLight3D _abLight;
     OmniLight3D _muzzleLight;
     readonly List<CpuParticles3D> _vapor = new();
-    MeshInstance3D _shockCone;
-    ShaderMaterial _shockMat;
+    CpuParticles3D _shockCone;
     Gradient _boomRamp;
     bool _supersonic;
     CpuParticles3D _smoke;
+    CpuParticles3D _streaks;
+    CpuParticles3D _spray;
     readonly List<Node3D> _gearOn = new();
     readonly List<Node3D> _gearOff = new();
     readonly List<Node3D> _bombVis = new();
@@ -171,16 +172,38 @@ public partial class Jet : Node3D, ITarget
             _rollNode.AddChild(v);
             _vapor.Add(v);
         }
-        // Transonic vapour cone: a soft see-through cone around the wings, open at the back.
-        _shockMat = new ShaderMaterial { Shader = new Shader { Code = ShockConeShader } };
-        _shockCone = new MeshInstance3D
+        // Transonic vapour cone: short-lived puffs on the surface of a cone around
+        // the wings, narrow at the nose and open at the back. Local coordinates,
+        // so the cone rides with the jet instead of smearing behind it.
+        var conePts = new Vector3[600];
+        for (int i = 0; i < conePts.Length; i++)
         {
-            Mesh = new CylinderMesh { TopRadius = 1.8f, BottomRadius = 7.5f, Height = 7f, RadialSegments = 32, Rings = 4, CapTop = false, CapBottom = false },
-            MaterialOverride = _shockMat,
+            float t = Mathf.Sqrt(GD.Randf());       // even spread over the surface: more points at the wide end
+            float r = Mathf.Lerp(1.8f, 7.5f, t);
+            float a = GD.Randf() * Mathf.Tau;
+            conePts[i] = new Vector3(Mathf.Lerp(1.5f, -5.5f, t), -0.4f + Mathf.Cos(a) * r, Mathf.Sin(a) * r);
+        }
+        _shockCone = new CpuParticles3D
+        {
+            Mesh = Main.SmokeQuad,
+            Amount = 500,
+            Lifetime = 0.22,
+            LocalCoords = true,
+            Emitting = false,
+            EmissionShape = CpuParticles3D.EmissionShapeEnum.Points,
+            EmissionPoints = conePts,
+            Direction = new Vector3(-1, 0, 0),
+            Spread = 15f,
+            InitialVelocityMin = 2f,
+            InitialVelocityMax = 8f,
+            Gravity = Vector3.Zero,
+            ScaleAmountMin = 0.9f,
+            ScaleAmountMax = 2.0f,
+            AngleMin = 0f,
+            AngleMax = 360f,
+            ColorRamp = Fx.Ramp(new[] { 0f, 0.3f, 1f },
+                    new[] { new Color(1, 1, 1, 0f), new Color(1, 1, 1, 0.7f), new Color(1, 1, 1, 0f) }),
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
-            Position = new Vector3(-2f, -0.4f, 0f),
-            Rotation = Fx.AlongX,   // narrow end at the nose
-            Visible = false,
         };
         _rollNode.AddChild(_shockCone);
         _boomRamp = Fx.Ramp(new[] { 0f, 0.15f, 1f },
@@ -192,6 +215,45 @@ public partial class Jet : Node3D, ITarget
         _smoke.Emitting = false;
         _smoke.Position = GetNode<Node3D>("Roll/SmokePoint").Position;
         _rollNode.AddChild(_smoke);
+
+        // Air streaks: faint thin lines hanging still in the air around the jet,
+        // so at speed they flash past. Added to Game, not the jet, so the
+        // emission box doesn't pitch with it.
+        var streakMat = new StandardMaterial3D
+        {
+            ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+            BillboardMode = BaseMaterial3D.BillboardModeEnum.Particles,
+            VertexColorUseAsAlbedo = true,
+            Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+            AlbedoTexture = Main.ParticleSoft,
+        };
+        _streaks = new CpuParticles3D
+        {
+            Mesh = new QuadMesh { Size = new Vector2(1f, 0.08f), Material = streakMat },
+            Amount = 220,
+            Lifetime = 0.5,
+            LocalCoords = false,
+            Emitting = false,
+            EmissionShape = CpuParticles3D.EmissionShapeEnum.Box,
+            EmissionBoxExtents = new Vector3(220f, 130f, 65f),
+            InitialVelocityMin = 0f,
+            InitialVelocityMax = 0f,
+            Gravity = Vector3.Zero,
+            ScaleAmountMin = 6f,
+            ScaleAmountMax = 14f,
+            ColorRamp = Fx.Ramp(new[] { 0f, 0.3f, 1f },
+                    new[] { new Color(1, 1, 1, 0f), new Color(1, 1, 1, 0.5f), new Color(1, 1, 1, 0f) }),
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+        };
+        Main.AddChild(_streaks);
+
+        // Dust kicked up off the ground on a fast, very low pass.
+        _spray = Main.MakeParticles(Main.SmokeQuad, 160, 1.8f, new Vector2(8, 25), new Vector2(4, 10),
+                Fx.Ramp(new[] { 0f, 0.15f, 1f }, new[] {
+                    new Color(0.6f, 0.53f, 0.4f, 0f), new Color(0.6f, 0.53f, 0.4f, 0.6f), new Color(0.65f, 0.6f, 0.5f, 0f) }),
+                new Vector3(0, -6f, 0), 1.5f, false, 35f, null, 6f);
+        _spray.Emitting = false;
+        Main.AddChild(_spray);
     }
 
     // ---------------------------------------------------------------- simulation
@@ -212,6 +274,7 @@ public partial class Jet : Node3D, ITarget
         GroundService(dt);
         Weapons(dt);
         Transonic();
+        SpeedCues();
         UpdateVisual();
         ComputeCcip();
     }
@@ -254,8 +317,11 @@ public partial class Jet : Node3D, ITarget
         return Mathf.Lerp(Cla * AlphaStall * Mathf.Sign(a), 0.95f * Mathf.Sin(2f * a), t);
     }
 
+    /// Transonic drag rise between Mach 0.95 and 1.05: a bump you feel, but
+    /// full afterburner pushes through it even low down (about 1280 km/h fully
+    /// loaded at sea level, 1550 clean), easing a little past Mach 1.15.
     static float WaveDrag(float m) =>
-        Mathf.SmoothStep(0.85f, 1.05f, m) * 0.045f - Mathf.SmoothStep(1.2f, 2.0f, m) * 0.02f;
+        Mathf.SmoothStep(0.95f, 1.05f, m) * 0.026f - Mathf.SmoothStep(1.15f, 1.5f, m) * 0.004f;
 
     float StoresDrag() =>
         Bombs * 0.0025f + Mavs * 0.002f + (GearDown ? 0.025f : 0f) + (Airbrake ? 0.05f : 0f);
@@ -423,7 +489,8 @@ public partial class Jet : Node3D, ITarget
             {
                 RearmTimer = -999f;
                 Rearm();
-                Main.Msg("READY - TURN AND TAKE OFF", new Color(0.6f, 1.0f, 0.6f), 4f);
+                ToRunwayStart();
+                Main.Msg("READY - RELEASE BRAKES (Z) AND TAKE OFF", new Color(0.6f, 1.0f, 0.6f), 4f);
             }
         }
         else if (!OnGround)
@@ -438,6 +505,26 @@ public partial class Jet : Node3D, ITarget
         Flares = MaxFlares;
         Fuel = FuelMax;
         Hp = 100f;
+    }
+
+    /// Puts the jet at the start of the runway, stopped, upright and facing
+    /// the front, brakes on and engines at idle.
+    void ToRunwayStart()
+    {
+        float x = Terrain.RunwayX0 + 60f;
+        Pos = new Vector2(x, Main.Terrain.Height(x) + GearH);
+        Vel = Vector2.Zero;
+        Theta = 0f;
+        _thetaDot = 0f;
+        _gammaPrev = 0f;
+        _phi = _phiTarget = 0f;
+        _stick = 0f;
+        Throttle = EngineSpool = 0f;
+        Airbrake = true;
+        GearDown = true;
+        OnGround = true;
+        Agl = 0f;
+        GLoad = 1f;
     }
 
     public void TakeDamage(float d)
@@ -460,36 +547,45 @@ public partial class Jet : Node3D, ITarget
         Visible = false;
         foreach (var v in _vapor)
             v.Emitting = false;
-        _shockCone.Visible = false;
+        _shockCone.Emitting = false;
+        _streaks.Emitting = false;
+        _spray.Emitting = false;
         Main.OnJetDestroyed(reason);
+    }
+
+    /// Air streaks above about Mach 0.6, and a dust trail under the jet when
+    /// it's fast and very low.
+    void SpeedCues()
+    {
+        float v = Vel.Length();
+        float st = Mathf.SmoothStep(0.55f, 0.95f, Mach);
+        _streaks.Emitting = st > 0.01f;
+        _streaks.Color = new Color(1, 1, 1, st);
+        // Billboard angles turn the other way to the jet's pitch.
+        _streaks.AngleMin = _streaks.AngleMax = -Mathf.RadToDeg(Vel.Angle());
+        _streaks.Position = new Vector3(Pos.X + Vel.X * 0.35f, Pos.Y + Vel.Y * 0.35f, 25f);
+
+        float low = OnGround ? 0f : 1f - Mathf.SmoothStep(8f, 35f, Agl);
+        float sp = low * Mathf.SmoothStep(120f, 300f, v);
+        _spray.Emitting = sp > 0.01f;
+        _spray.Color = new Color(1, 1, 1, sp);
+        _spray.Position = new Vector3(Pos.X - Vel.X * 0.05f, Main.Terrain.Height(Pos.X), 0f);
     }
 
     // ---------------------------------------------------------------- sound barrier
 
-    const string ShockConeShader = @"
-shader_type spatial;
-render_mode unshaded, cull_disabled, depth_draw_never, blend_mix, shadows_disabled;
-uniform float strength = 0.0;
-
-void fragment() {
-    // Thicker where you look along the surface, fading out at both ends, with a shimmer.
-    float edge = 1.0 - abs(dot(NORMAL, VIEW));
-    float along = smoothstep(0.0, 0.25, UV.y) * smoothstep(1.0, 0.55, UV.y);
-    float shimmer = sin(UV.x * 40.0 + TIME * 7.0) * sin(UV.y * 23.0 - TIME * 11.0) * 0.5 + 0.5;
-    ALBEDO = vec3(1.0);
-    ALPHA = clamp(strength * along * mix(0.4, 0.95, edge) * mix(0.75, 1.0, shimmer), 0.0, 0.9);
-}";
-
-    /// Vapour cone between about Mach 0.92 and 1.08 (thicker in the damp low air),
+    /// Vapour cone from about Mach 0.92 on (thicker in the damp low air),
     /// and a sonic boom each time the jet goes through Mach 1.
     void Transonic()
     {
-        float band = Mathf.SmoothStep(0.92f, 0.98f, Mach) * (1f - Mathf.SmoothStep(1.02f, 1.08f, Mach));
+        // Builds up from Mach 0.92, peaks through Mach 1, then settles to a thinner
+        // cone that stays for as long as you're supersonic.
+        float band = Mathf.SmoothStep(0.92f, 0.98f, Mach) * (1f - 0.4f * Mathf.SmoothStep(1.05f, 1.4f, Mach));
         float humid = Mathf.Clamp(1f - Pos.Y / 9000f, 0.25f, 1f);
         float s = band * humid * Fx.Rand(0.85f, 1.05f);
-        _shockCone.Visible = s > 0.01f;
-        _shockMat.SetShaderParameter("strength", s);
-        _shockCone.Scale = new Vector3(1f, 1f + (Mach - 0.95f), 1f) * Fx.Rand(0.97f, 1.03f);
+        _shockCone.Emitting = s > 0.01f;
+        _shockCone.Color = new Color(1, 1, 1, Mathf.Min(s * 1.3f, 1f));
+        _shockCone.Scale = new Vector3(1f + (Mach - 0.95f), 1f, 1f);
 
         // Hysteresis, so hovering right at Mach 1 doesn't boom every frame.
         if (!_supersonic && Mach >= 1f)
@@ -508,8 +604,8 @@ void fragment() {
         Main.Audio.PlayAt("boom", p, 3f, 0.55f);
         Main.Audio.PlayAt("boom", p, 0f, 0.6f, 0.12f);
         Main.Shake = Mathf.Max(Main.Shake, 0.5f);
-        var puff = Main.MakeParticles(Main.SmokeQuad, 40, 1.4f, new Vector2(15, 35), new Vector2(3, 7), _boomRamp, Vector3.Zero, 3f);
-        Main.FireOnce(puff, p, 2f);
+        var puff = Main.MakeParticles(Main.SmokeQuad, 80, 3f, new Vector2(15, 35), new Vector2(5, 11), _boomRamp, Vector3.Zero, 1.5f);
+        Main.FireOnce(puff, p, 4f);
         Main.Msg("MACH 1", new Color(0.6f, 0.9f, 1.0f), 2f);
     }
 
