@@ -40,7 +40,7 @@ public partial class Game : Node3D
     readonly List<RigidBody3D> _debris = new();
     readonly List<MeshInstance3D> _scorch = new();
     public readonly List<Message> Messages = new();
-    public int Wave;
+    public int Wave = 2;   // TEMP: skip to wave 2. Set back to 0 (or remove "= 1") to start at wave 1.
     public float WaveTimer = 8f;
     public bool WaveActive;
     public int Score;

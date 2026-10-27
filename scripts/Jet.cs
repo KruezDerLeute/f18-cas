@@ -25,7 +25,7 @@ public partial class Jet : Node3D, ITarget
     public const float FuelMax = 4900f; // kg internal
     const float MilThrust = 124000f;    // N, both engines
     const float AbThrust = 196000f;
-    const float GLimit = 7.5f;
+    const float GLimit = 12.5f;
     const float GNeg = -3f;
     const float Mk82Mass = 227f;
     const float Agm65Mass = 300f;
@@ -40,6 +40,9 @@ public partial class Jet : Node3D, ITarget
     /// Speed at the start, along the direction the jet is rotated to in the editor.
     [Export] public float StartSpeed = 190f;
 
+    /// Start parked on the runway instead of in the air.
+    [Export] public bool StartOnRunway = true;
+
     public Game Main;
     public Vector2 Pos;
     public Vector2 Vel;
@@ -51,6 +54,7 @@ public partial class Jet : Node3D, ITarget
     public float EngineSpool = 0.85f;
     public float Fuel = FuelMax;
     public float Hp = 100f;
+    public float HitFlash;   // 0..1, red screen flash after taking a hit; fades out
     public bool Alive = true;
     public bool GearDown;
     public bool OnGround;
@@ -92,6 +96,8 @@ public partial class Jet : Node3D, ITarget
     CpuParticles3D _shockCone;
     Gradient _boomRamp;
     bool _supersonic;
+    float _coneFlash;   // seconds left on the vapour cone after crossing Mach 1
+    const float ConeFlashTime = 3.6f;
     CpuParticles3D _smoke;
     CpuParticles3D _streaks;
     CpuParticles3D _spray;
@@ -100,15 +106,21 @@ public partial class Jet : Node3D, ITarget
     readonly List<Node3D> _bombVis = new();
     readonly List<Node3D> _mavVis = new();
 
-    /// Called by Game once its shared resources exist. The start position is
-    /// wherever you placed the jet in the editor.
+    /// Called by Game once its shared resources exist. The jet starts on the
+    /// runway, unless StartOnRunway is off: then it starts in the air wherever
+    /// you placed it in the editor.
     public void Init(Game main)
     {
         Main = main;
-        Pos = new Vector2(Position.X, Position.Y);
-        Vel = Vector2.FromAngle(Rotation.Z) * StartSpeed;
-        Theta = Vel.Angle() + 0.06f;
-        _gammaPrev = Vel.Angle();
+        if (StartOnRunway)
+            ToRunwayStart();
+        else
+        {
+            Pos = new Vector2(Position.X, Position.Y);
+            Vel = Vector2.FromAngle(Rotation.Z) * StartSpeed;
+            Theta = Vel.Angle() + 0.06f;
+            _gammaPrev = Vel.Angle();
+        }
         FindParts();
         UpdateVisual();
     }
@@ -175,7 +187,7 @@ public partial class Jet : Node3D, ITarget
         // Transonic vapour cone: short-lived puffs on the surface of a cone around
         // the wings, narrow at the nose and open at the back. Local coordinates,
         // so the cone rides with the jet instead of smearing behind it.
-        var conePts = new Vector3[600];
+        var conePts = new Vector3[3000];
         for (int i = 0; i < conePts.Length; i++)
         {
             float t = Mathf.Sqrt(GD.Randf());       // even spread over the surface: more points at the wide end
@@ -186,7 +198,7 @@ public partial class Jet : Node3D, ITarget
         _shockCone = new CpuParticles3D
         {
             Mesh = Main.SmokeQuad,
-            Amount = 500,
+            Amount = 10000,
             Lifetime = 0.22,
             LocalCoords = true,
             Emitting = false,
@@ -261,6 +273,7 @@ public partial class Jet : Node3D, ITarget
     public void Sim(float dt)
     {
         RwrLock = Mathf.Max(RwrLock - dt, 0f);
+        HitFlash = Mathf.Max(HitFlash - dt * 2f, 0f);
         if (!Alive)
             return;
         Controls(dt);
@@ -273,7 +286,7 @@ public partial class Jet : Node3D, ITarget
         }
         GroundService(dt);
         Weapons(dt);
-        Transonic();
+        Transonic(dt);
         SpeedCues();
         UpdateVisual();
         ComputeCcip();
@@ -532,6 +545,8 @@ public partial class Jet : Node3D, ITarget
         if (!Alive)
             return;
         Hp -= d;
+        // Bigger hits flash harder; even a graze is noticeable.
+        HitFlash = Mathf.Max(HitFlash, Mathf.Clamp(0.35f + d / 40f, 0.35f, 1f));
         if (Hp <= 0f)
         {
             Hp = 0f;
@@ -574,15 +589,15 @@ public partial class Jet : Node3D, ITarget
 
     // ---------------------------------------------------------------- sound barrier
 
-    /// Vapour cone from about Mach 0.92 on (thicker in the damp low air),
-    /// and a sonic boom each time the jet goes through Mach 1.
-    void Transonic()
+    /// A brief vapour cone (thicker in the damp low air) and a sonic boom
+    /// each time the jet goes through Mach 1.
+    void Transonic(float dt)
     {
-        // Builds up from Mach 0.92, peaks through Mach 1, then settles to a thinner
-        // cone that stays for as long as you're supersonic.
-        float band = Mathf.SmoothStep(0.92f, 0.98f, Mach) * (1f - 0.4f * Mathf.SmoothStep(1.05f, 1.4f, Mach));
+        // Flashes up as the jet crosses Mach 1 and fades out within a fraction of a second.
+        _coneFlash = Mathf.Max(_coneFlash - dt, 0f);
+        float flash = _coneFlash / ConeFlashTime;
         float humid = Mathf.Clamp(1f - Pos.Y / 9000f, 0.25f, 1f);
-        float s = band * humid * Fx.Rand(0.85f, 1.05f);
+        float s = flash * flash * humid * Fx.Rand(0.85f, 1.05f);
         _shockCone.Emitting = s > 0.01f;
         _shockCone.Color = new Color(1, 1, 1, Mathf.Min(s * 1.3f, 1f));
         _shockCone.Scale = new Vector3(1f + (Mach - 0.95f), 1f, 1f);
@@ -591,6 +606,7 @@ public partial class Jet : Node3D, ITarget
         if (!_supersonic && Mach >= 1f)
         {
             _supersonic = true;
+            _coneFlash = ConeFlashTime;
             SonicBoom();
         }
         else if (_supersonic && Mach < 0.97f)
@@ -600,9 +616,7 @@ public partial class Jet : Node3D, ITarget
     void SonicBoom()
     {
         var p = GlobalPosition;
-        // A real boom is a double bang: the nose shock, then the tail shock.
-        Main.Audio.PlayAt("boom", p, 3f, 0.55f);
-        Main.Audio.PlayAt("boom", p, 0f, 0.6f, 0.12f);
+        Main.Audio.Play("sonic_boom");
         Main.Shake = Mathf.Max(Main.Shake, 0.5f);
         var puff = Main.MakeParticles(Main.SmokeQuad, 80, 3f, new Vector2(15, 35), new Vector2(5, 11), _boomRamp, Vector3.Zero, 1.5f);
         Main.FireOnce(puff, p, 4f);

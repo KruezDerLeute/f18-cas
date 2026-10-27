@@ -77,6 +77,7 @@ public partial class Hud : Control
 		if (Main?.Jet == null)
 			return;
 		var j = Main.Jet;
+		DrawHitFlash(j);
 		DrawWorldMarkers(j);
 		DrawOffscreenEnemies(j);
 		DrawFlightData(j);
@@ -92,6 +93,26 @@ public partial class Hud : Control
 			CTxt(new Vector2(Size.X * 0.5f, Size.Y * 0.42f), "PAUSED", 40, CHud);
 		if (Main.State != GameState.Play)
 			DrawEnd();
+	}
+
+	/// Red glow around the screen edges after the jet takes a hit, with a faint
+	/// red tint over the middle. Drawn first so the HUD stays readable on top.
+	void DrawHitFlash(Jet j)
+	{
+		float a = j.HitFlash;
+		if (a <= 0f)
+			return;
+		var edge = new Color(0.9f, 0.05f, 0.02f, 0.75f * a);
+		var clear = new Color(0.9f, 0.05f, 0.02f, 0f);
+		DrawRect(new Rect2(Vector2.Zero, Size), new Color(0.9f, 0.05f, 0.02f, 0.12f * a));
+		float b = Mathf.Min(Size.X, Size.Y) * 0.22f;
+		Vector2 o0 = Vector2.Zero, o1 = new(Size.X, 0), o2 = Size, o3 = new(0, Size.Y);
+		Vector2 i0 = new(b, b), i1 = new(Size.X - b, b), i2 = Size - new Vector2(b, b), i3 = new(b, Size.Y - b);
+		var cols = new[] { edge, edge, clear, clear };
+		DrawPolygon(new[] { o0, o1, i1, i0 }, cols);
+		DrawPolygon(new[] { o1, o2, i2, i1 }, cols);
+		DrawPolygon(new[] { o2, o3, i3, i2 }, cols);
+		DrawPolygon(new[] { o3, o0, i0, i3 }, cols);
 	}
 
 	/// Arrows on the screen edge pointing at hostiles outside the view.
@@ -451,7 +472,7 @@ public partial class Hud : Control
 			w.Add(("PULL UP", CWarn));
 		if (!j.OnGround && j.Stalled)
 			w.Add(("STALL", CWarn));
-		if (!j.OnGround && j.GLoad > 7f)
+		if (!j.OnGround && j.GLoad > 12f)
 			w.Add(("OVER-G", CAmber));
 		if (j.Fuel < 900f)
 			w.Add(("BINGO FUEL - RTB", CAmber));

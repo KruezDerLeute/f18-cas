@@ -3,9 +3,9 @@ res://scripts/Audio.cs
 res://scripts/Missile.cs
 res://scripts/Unit.cs
 res://scripts/Jet.cs
+res://scripts/Foreground.cs
 res://scripts/Clouds.cs
 res://scripts/Terrain.cs
 res://scripts/Game.cs
 res://scripts/Flir.cs
-res://scenes/weapons/maverick.tscn
-res://scripts/Foreground.cs
+res://terrain.tscn

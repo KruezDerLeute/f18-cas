@@ -59,6 +59,8 @@ public partial class Game : Node3D
 
         Msg("TASKING: CLOSE AIR SUPPORT", new Color(0.6f, 1.0f, 0.6f), 6f);
         Msg("Friendly line is at the green smoke. Enemy column inbound from the east.", Colors.White, 7f);
+        if (Jet.OnGround)
+            Msg("RELEASE BRAKES (Z), FULL THROTTLE AND TAKE OFF", new Color(0.6f, 1.0f, 0.6f), 7f);
         UpdateCamera(1f);
     }
 

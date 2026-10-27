@@ -12,13 +12,28 @@ public partial class Audio : Node
 {
     const float SpeedOfSound = 343f;
 
+    /// Overall level of the engine and afterburner loops (1 = full).
+    [Export] public float EngineVolume = 0.3f;
+
+    /// Fraction of the engine and afterburner level still heard past Mach 1.
+    [Export] public float SupersonicEngine = 0.08f;
+
+    /// Overall level of the rushing-air loop (1 = full).
+    [Export] public float WindVolume = 0.4f;
+
+    /// Fraction of the wind level still heard past Mach 1.
+    [Export] public float SupersonicWind = 0.1f;
+
+    /// How much quieter the stall tone gets while the RWR is sounding, in dB.
+    [Export] public float StallDuck = -12f;
+
     /// Folder holding the .wav files listed in Sounds.
     [Export] public string SoundFolder = "res://assets/sounds";
 
     /// Every sound and whether it loops.
     static readonly (string name, bool loop)[] Sounds =
     {
-        ("boom", false), ("boom_small", false), ("cannon", false), ("gun", true),
+        ("boom", false), ("boom_small", false), ("sonic_boom", false), ("cannon", false), ("gun", true),
         ("aaa", false), ("launch", false), ("flare", false), ("release", false),
         ("thump", false), ("hit", false), ("engine", true), ("afterburner", true),
         ("wind", true), ("rwr", true), ("missile_warn", true), ("pull_up", true),
@@ -190,26 +205,34 @@ public partial class Audio : Node
         bool running = alive && j.Fuel > 0f;
         float eng = running ? Mathf.Clamp(j.EngineSpool, 0f, 1f) : 0f;
         float ab = running ? Mathf.Clamp((j.EngineSpool - 1f) / 0.25f, 0f, 1f) : 0f;
-        // The engines are behind the nose: past Mach 1 their noise can't catch up.
-        float rear = alive ? 1f - Mathf.SmoothStep(0.96f, 1.02f, j.Mach) : 1f;
-        _engine.VolumeDb = running ? Db((0.06f + eng * 0.3f) * rear) : -80f;
+        // The engines are behind the nose: past Mach 1 most of their noise can't
+        // catch up, leaving only a faint hum carried through the airframe.
+        float rear = alive ? Mathf.Lerp(1f, SupersonicEngine, Mathf.SmoothStep(0.96f, 1.02f, j.Mach)) : 1f;
+        _engine.VolumeDb = running ? Db((0.06f + eng * 0.3f) * rear * EngineVolume) : -80f;
         _engine.PitchScale = 0.55f + eng * 0.6f;
-        _ab.VolumeDb = Db(ab * 0.75f * rear);
+        _ab.VolumeDb = Db(ab * 0.75f * rear * EngineVolume);
         _ab.PitchScale = 0.9f + ab * 0.15f;
         float spd = alive ? j.Vel.Length() : 0f;
         float sf = Mathf.Clamp(spd / 350f, 0f, 1.3f);
         // Rushing air: rises steeply with speed and roars louder near the ground.
         float lowRush = 1f + 0.6f * (1f - Mathf.SmoothStep(30f, 400f, j.Agl)) * sf;
-        _wind.VolumeDb = Db((sf * sf * 0.6f + sf * 0.05f) * lowRush);
+        // Past Mach 1 the shock wave carries most of the rush away behind the jet.
+        float windSuper = alive ? Mathf.Lerp(1f, SupersonicWind, Mathf.SmoothStep(0.96f, 1.02f, j.Mach)) : 1f;
+        _wind.VolumeDb = Db((sf * sf * 0.6f + sf * 0.05f) * lowRush * windSuper * WindVolume);
         _wind.PitchScale = 0.6f + sf * 0.85f;
         SetLoop(_gun, alive && j.Firing, -3f);
 
-        bool missile = Main.SamInbound();
-        SetLoop(_warn["missile_warn"], alive && missile, -9f);
-        SetLoop(_warn["rwr"], alive && !missile && j.RwrLock > 0f, -11f);
-        bool pull = alive && Main.PullUpWarning();
-        SetLoop(_warn["pull_up"], pull, -8f);
-        SetLoop(_warn["stall"], alive && !pull && j.Stalled && !j.OnGround, -11f);
+        // Warnings: each one sounds whenever its HUD warning is up (same
+        // conditions as Hud.DrawWarnings), independently, so several can play at once.
+        bool locked = alive && j.RwrLock > 0f;
+        bool launch = alive && Main.SamInbound();
+        // The RWR sounds one of its two: the launch warning replaces the lock warning.
+        SetLoop(_warn["rwr"], locked && !launch, 0f);
+        SetLoop(_warn["missile_warn"], launch, 0f);
+        SetLoop(_warn["pull_up"], alive && Main.PullUpWarning(), 0f);
+        // The stall tone is a steady buzz that drowns out the RWR's beeps, so it
+        // ducks under them while the RWR is sounding.
+        SetLoop(_warn["stall"], alive && j.Stalled && !j.OnGround, locked || launch ? -11f + StallDuck : -11f);
         var lt = j.LockTarget;
         bool tracking = alive && lt != null && IsInstanceValid(lt) && lt.Alive && j.LockTime > 0.8f;
         SetLoop(_warn["lock_tone"], tracking, -22f);

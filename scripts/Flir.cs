@@ -217,7 +217,7 @@ void fragment() {
             return;
         _cam.Position = eye;
         _cam.LookAt(_aim, Mathf.Abs(dir.Y / Range) > 0.99f ? Vector3.Right : Vector3.Up);
-        _cam.Fov = Mathf.Clamp(Mathf.RadToDeg(2f * Mathf.Atan(_width * 0.5f / Range)), 0.3f, 40f);
+        _cam.Fov = Mathf.Clamp(Mathf.RadToDeg(2f * Mathf.Atan(_width * 0.5f / Range)), 1f, 40f);   // Godot rejects a FOV under 1 degree
     }
 
     /// Where a line 15 degrees below the horizon, in the direction of flight, meets the ground.
