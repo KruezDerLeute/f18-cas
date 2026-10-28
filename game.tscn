@@ -15,6 +15,9 @@
 [ext_resource type="Script" uid="uid://te7evf4ltli1" path="res://scripts/Audio.cs" id="14_audio"]
 [ext_resource type="Script" uid="uid://bbedxdrmiq22g" path="res://scripts/Hud.cs" id="15_hud"]
 [ext_resource type="PackedScene" path="res://scenes/units/m1a2.tscn" id="16_m1a2"]
+[ext_resource type="PackedScene" path="res://scenes/menu.tscn" id="17_menu"]
+[ext_resource type="AudioStream" path="res://assets/sounds/awacs_mission_brief.ogg" id="18_brief"]
+[ext_resource type="AudioStream" path="res://assets/sounds/awacs_ending.ogg" id="19_victory"]
 
 [node name="Game" type="Node3D" unique_id=831673852]
 script = ExtResource("1_game")
@@ -27,6 +30,9 @@ SamMissileScene = ExtResource("10_sam")
 BombModel = ExtResource("11_mk82")
 ParticleHard = ExtResource("12_hard")
 ParticleSoft = ExtResource("13_soft")
+MenuScene = ExtResource("17_menu")
+BriefingVoice = ExtResource("18_brief")
+VictoryVoice = ExtResource("19_victory")
 
 [node name="World" parent="." unique_id=1122503721 instance=ExtResource("2_world")]
 

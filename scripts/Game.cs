@@ -86,23 +86,22 @@ public partial class Game : Node3D
     /// Title screen over a slow fly-by of the battlefield.
     void ShowMenu()
     {
-        OpenOverlay(new Menu
+        var menu = MenuScene.Instantiate<Menu>();
+        menu.OnStart = d =>
         {
-            OnStart = d =>
-            {
-                Settings.Difficulty = d;
-                Settings.SkipMenu = true;
-                Settings.ShowBriefing = true;
-                GetTree().ReloadCurrentScene();
-            },
-        });
+            Settings.Difficulty = d;
+            Settings.SkipMenu = true;
+            Settings.ShowBriefing = true;
+            GetTree().ReloadCurrentScene();
+        };
+        OpenOverlay(menu);
     }
 
     /// Mission briefing, panning along the friendly line, before the jet is handed over.
     void ShowBriefing()
     {
         _menuX0 = FriendlyLine - 500f;
-        OpenOverlay(new Cutscene
+        var briefing = new Cutscene
         {
             Header = "MISSION BRIEFING",
             Title = "OPERATION IRON SHIELD",
@@ -116,7 +115,16 @@ public partial class Game : Node3D
                 _menuLayer.QueueFree();
                 StartMission();
             },
-        });
+        };
+        OpenOverlay(briefing);
+
+        // A child of the briefing, so it stops when the player starts the mission.
+        if (BriefingVoice != null)
+        {
+            var voice = new AudioStreamPlayer { Stream = BriefingVoice };
+            briefing.AddChild(voice);
+            voice.Play();
+        }
     }
 
     static string BriefingText()
@@ -144,17 +152,17 @@ public partial class Game : Node3D
         _menuX0 = FriendlyLine - 500f;
         _menuTime = 0f;
         string body = won
-            ? "The reinforcement column has reached the valley. Enemy armor is pulling back " +
-              "across the river.\n\n" +
+            ? "Viper One, this is Ground. The reinforcement column has reached the valley. " +
+              "Enemy armor is pulling back across the river.\n\n" +
               (saved == FriendlyStart
                   ? "Every tank in the platoon made it. Not a single crew lost."
-                  : $"{saved} of {FriendlyStart} tanks in the platoon made it through the day.") + "\n\n" +
-              "\"Viper 1, this is Ground. The line held because of you. RTB, drinks are on us.\""
+                  : $"{saved} of {FriendlyStart} tanks in the platoon made it.") + "\n\n" +
+              "The line held because of you. RTB. Drinks are on us."
             : "The last friendly tank has gone silent. Enemy armor is pouring through the gap " +
               "toward the airfield.\n\n" +
               "\"Viper 1, this is Command. We've lost the valley. Break off and return to base. " +
               "We'll be back.\"";
-        OpenOverlay(new Cutscene
+        var ending = new Cutscene
         {
             Header = won ? "MISSION COMPLETE" : "MISSION FAILED",
             Title = won ? "THE LINE HELD" : "POSITION OVERRUN",
@@ -173,7 +181,16 @@ public partial class Game : Node3D
                     OnMenu = BackToMenu,
                 });
             },
-        });
+        };
+        OpenOverlay(ending);
+
+        // The recording says every tank made it, so only play it on a perfect run.
+        if (won && saved == FriendlyStart && VictoryVoice != null)
+        {
+            var voice = new AudioStreamPlayer { Stream = VictoryVoice };
+            ending.AddChild(voice);
+            voice.Play();
+        }
     }
 
     void EndMission(GameState outcome)

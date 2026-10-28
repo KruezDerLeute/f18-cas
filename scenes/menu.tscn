@@ -1,0 +1,255 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://c2bu5ubgicpuf" path="res://scripts/Menu.cs" id="1_menu"]
+[ext_resource type="AudioStream" uid="uid://lw6irpvxqvf0" path="res://assets/sounds/menu_sound.ogg" id="2_music"]
+
+[sub_resource type="StyleBoxFlat" id="Panel"]
+content_margin_left = 28.0
+content_margin_top = 28.0
+content_margin_right = 28.0
+content_margin_bottom = 28.0
+bg_color = Color(0.02, 0.06, 0.03, 0.85)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.35, 1, 0.45, 0.6)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="ButtonNormal"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0, 0, 0, 0.4)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.35, 1, 0.45, 0.6)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="ButtonHover"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.35, 1, 0.45, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.35, 1, 0.45, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="ButtonPressed"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(1, 0.75, 0.2, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.75, 0.2, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="Theme" id="MenuTheme"]
+Button/colors/font_color = Color(0.35, 1, 0.45, 1)
+Button/colors/font_focus_color = Color(0, 0, 0, 1)
+Button/colors/font_hover_color = Color(0, 0, 0, 1)
+Button/colors/font_pressed_color = Color(0, 0, 0, 1)
+Button/styles/focus = SubResource("ButtonHover")
+Button/styles/hover = SubResource("ButtonHover")
+Button/styles/normal = SubResource("ButtonNormal")
+Button/styles/pressed = SubResource("ButtonPressed")
+Label/colors/font_shadow_color = Color(0, 0, 0, 0.7)
+PanelContainer/styles/panel = SubResource("Panel")
+
+[node name="Menu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("MenuTheme")
+script = ExtResource("1_menu")
+
+[node name="Shade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.45)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+layout_mode = 2
+
+[node name="Columns" type="HBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 40
+
+[node name="Main" type="VBoxContainer" parent="Center/Panel/Columns"]
+custom_minimum_size = Vector2(520, 0)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Center/Panel/Columns/Main"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 1, 0.45, 1)
+theme_override_font_sizes/font_size = 64
+text = "F/A-18"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Center/Panel/Columns/Main"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 1, 0.45, 1)
+theme_override_font_sizes/font_size = 30
+text = "CLOSE AIR SUPPORT"
+horizontal_alignment = 1
+
+[node name="Briefing" type="Label" parent="Center/Panel/Columns/Main"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 17
+text = "Enemy tanks, trucks and anti-air are rolling in from the RIGHT.
+Protect the friendly tanks at the GREEN SMOKE.
+Survive as many waves as you can."
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="Center/Panel/Columns/Main"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="ChooseDifficulty" type="Label" parent="Center/Panel/Columns/Main"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.75, 0.2, 1)
+theme_override_font_sizes/font_size = 18
+text = "CHOOSE DIFFICULTY"
+horizontal_alignment = 1
+
+[node name="Easy" type="Button" parent="Center/Panel/Columns/Main"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "EASY"
+
+[node name="EasyInfo" type="Label" parent="Center/Panel/Columns/Main"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 1, 0.45, 0.6)
+theme_override_font_sizes/font_size = 13
+text = "Start in the air, can't stall, auto pull-up near the ground,
+unlimited fuel, free rearm after each wave, fewer SAMs."
+horizontal_alignment = 1
+
+[node name="Normal" type="Button" parent="Center/Panel/Columns/Main"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "NORMAL"
+
+[node name="NormalInfo" type="Label" parent="Center/Panel/Columns/Main"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 1, 0.45, 0.6)
+theme_override_font_sizes/font_size = 13
+text = "Start in the air, can't stall, takes less damage.
+Land on the runway to rearm."
+horizontal_alignment = 1
+
+[node name="Realistic" type="Button" parent="Center/Panel/Columns/Main"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "REALISTIC"
+
+[node name="RealisticInfo" type="Label" parent="Center/Panel/Columns/Main"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 1, 0.45, 0.6)
+theme_override_font_sizes/font_size = 13
+text = "Full flight model: take off from the runway,
+manage stall, fuel and landing yourself."
+horizontal_alignment = 1
+
+[node name="Spacer2" type="Control" parent="Center/Panel/Columns/Main"]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="Center/Panel/Columns/Main"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ControlsButton" type="Button" parent="Center/Panel/Columns/Main/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+text = "CONTROLS"
+
+[node name="Quit" type="Button" parent="Center/Panel/Columns/Main/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+text = "QUIT"
+
+[node name="Controls" type="Label" parent="Center/Panel/Columns"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 1, 0.45, 1)
+theme_override_font_sizes/font_size = 16
+text = "CONTROLS
+
+W / S        pull up / push down
+F            flip (turn around)
+E / Q        throttle up / down
+SPACE        cannon
+B            drop bomb
+M            fire Maverick missile
+T            next target
+X            flares (dodge SAMs!)
+G            landing gear
+Z            speedbrake / wheel brakes
+V            targeting camera
+
+P / ESC      pause
+R            restart
+H            show / hide help
+
+TIP: when a missile warning sounds,
+press X for flares and turn hard."
+
+[node name="Music" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("2_music")
+volume_db = -6.0

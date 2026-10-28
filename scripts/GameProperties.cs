@@ -26,6 +26,12 @@ public partial class Game : Node3D
     [ExportGroup("Effects")]
     [Export] public Texture2D ParticleHard;
     [Export] public Texture2D ParticleSoft;
+    [ExportGroup("UI")]
+    [Export] public PackedScene MenuScene;
+    /// AWACS voice line played over the mission briefing.
+    [Export] public AudioStream BriefingVoice;
+    /// Ground's radio call over the victory ending (it says every tank made it).
+    [Export] public AudioStream VictoryVoice;
 
     /// X of the friendly front line; read from the "FriendlyLine" marker in world.tscn.
     public float FriendlyLine = 3800f;
