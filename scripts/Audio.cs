@@ -194,7 +194,7 @@ public partial class Audio : Node
         if (Main?.Jet == null)
             return;
         var j = Main.Jet;
-        bool paused = Main.Paused;
+        bool paused = Main.Paused || Main.InMenu;
         foreach (var p in new[] { _engine, _ab, _wind, _gun })
             p.StreamPaused = paused;
         foreach (var p in _warn.Values)

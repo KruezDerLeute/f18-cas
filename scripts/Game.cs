@@ -47,6 +47,7 @@ public partial class Game : Node3D
             u.Init(this, u.Position.X, u.Position.Z);
             Units.Add(u);
         }
+        FriendlyStart = CountTeam(0);
         Jet = GetNode<Jet>("Jet");
         Jet.Init(this);
         Camera = GetNode<Camera3D>("Camera");
@@ -57,16 +58,174 @@ public partial class Game : Node3D
         _hud = GetNode<Hud>("HudLayer/Hud");
         _hud.Main = this;
 
-        Msg("TASKING: CLOSE AIR SUPPORT", new Color(0.6f, 1.0f, 0.6f), 6f);
-        Msg("Friendly line is at the green smoke. Enemy column inbound from the east.", Colors.White, 7f);
+        if (!Settings.SkipMenu)
+        {
+            ShowMenu();
+            return;
+        }
+        if (Settings.ShowBriefing)
+        {
+            Settings.ShowBriefing = false;
+            ShowBriefing();
+            return;
+        }
+        StartMission();
+    }
+
+    void StartMission()
+    {
+        Msg($"TASKING: CLOSE AIR SUPPORT  ({Settings.Difficulty.ToString().ToUpper()})", new Color(0.6f, 1.0f, 0.6f), 6f);
+        Msg("Protect the friendly tanks at the green smoke. Enemies come from the right.", Colors.White, 7f);
         if (Jet.OnGround)
             Msg("RELEASE BRAKES (Z), FULL THROTTLE AND TAKE OFF", new Color(0.6f, 1.0f, 0.6f), 7f);
+        else
+            Msg("Hold W to climb, S to dive, SPACE to shoot. F flips you around.", new Color(0.6f, 1.0f, 0.6f), 9f);
         UpdateCamera(1f);
+    }
+
+    /// Title screen over a slow fly-by of the battlefield.
+    void ShowMenu()
+    {
+        OpenOverlay(new Menu
+        {
+            OnStart = d =>
+            {
+                Settings.Difficulty = d;
+                Settings.SkipMenu = true;
+                Settings.ShowBriefing = true;
+                GetTree().ReloadCurrentScene();
+            },
+        });
+    }
+
+    /// Mission briefing, panning along the friendly line, before the jet is handed over.
+    void ShowBriefing()
+    {
+        _menuX0 = FriendlyLine - 500f;
+        OpenOverlay(new Cutscene
+        {
+            Header = "MISSION BRIEFING",
+            Title = "OPERATION IRON SHIELD",
+            Info = $"CALLSIGN: VIPER 1        DIFFICULTY: {Settings.Difficulty.ToString().ToUpper()}",
+            Body = BriefingText(),
+            ContinueText = "START MISSION",
+            OnDone = () =>
+            {
+                InMenu = false;
+                _hud.Visible = true;
+                _menuLayer.QueueFree();
+                StartMission();
+            },
+        });
+    }
+
+    static string BriefingText()
+    {
+        string start = Settings.StartInAir
+            ? "You are already airborne over the airfield. Fly RIGHT to reach the front."
+            : "Your jet is on the runway. Release the brakes (Z), go to full throttle (E) and take off.";
+        return
+            "0600 HOURS. Enemy armor has broken through the river valley in the east.\n\n" +
+            "The last friendly tank platoon is dug in at the GREEN SMOKE. They will not hold " +
+            "on their own. You are Viper 1, the only aircraft in range.\n\n" +
+            "Destroy the enemy columns before they reach our tanks. Reinforcements are " +
+            $"{MissionWaves} waves out: hold the line until they arrive. Expect anti-aircraft guns " +
+            "and SAM launchers: when the missile warning sounds, drop FLARES (X) and turn hard.\n\n" +
+            start + "\n\n" +
+            "Good hunting, Viper 1.";
+    }
+
+    /// Victory or overrun: an ending cutscene, then the debrief.
+    void ShowEnding()
+    {
+        _endingShown = true;
+        bool won = State == GameState.Victory;
+        int saved = CountTeam(0);
+        _menuX0 = FriendlyLine - 500f;
+        _menuTime = 0f;
+        string body = won
+            ? "The reinforcement column has reached the valley. Enemy armor is pulling back " +
+              "across the river.\n\n" +
+              (saved == FriendlyStart
+                  ? "Every tank in the platoon made it. Not a single crew lost."
+                  : $"{saved} of {FriendlyStart} tanks in the platoon made it through the day.") + "\n\n" +
+              "\"Viper 1, this is Ground. The line held because of you. RTB, drinks are on us.\""
+            : "The last friendly tank has gone silent. Enemy armor is pouring through the gap " +
+              "toward the airfield.\n\n" +
+              "\"Viper 1, this is Command. We've lost the valley. Break off and return to base. " +
+              "We'll be back.\"";
+        OpenOverlay(new Cutscene
+        {
+            Header = won ? "MISSION COMPLETE" : "MISSION FAILED",
+            Title = won ? "THE LINE HELD" : "POSITION OVERRUN",
+            TitleColor = won ? new Color(0.35f, 1.0f, 0.45f) : new Color(1.0f, 0.3f, 0.2f),
+            Info = "OPERATION IRON SHIELD",
+            Body = body,
+            ContinueText = "DEBRIEF",
+            OnDone = () =>
+            {
+                _menuLayer.QueueFree();
+                OpenOverlay(new Debrief
+                {
+                    Main = this,
+                    Won = won,
+                    OnFlyAgain = () => GetTree().ReloadCurrentScene(),
+                    OnMenu = BackToMenu,
+                });
+            },
+        });
+    }
+
+    void EndMission(GameState outcome)
+    {
+        State = outcome;
+        StateTime = 0f;
+    }
+
+    void OpenOverlay(Control c)
+    {
+        InMenu = true;
+        _hud.Visible = false;
+        _menuLayer = new CanvasLayer { Layer = 10 };
+        AddChild(_menuLayer);
+        _menuLayer.AddChild(c);
+        UpdateMenuCamera(0f);
+    }
+
+    void UpdateMenuCamera(float dt)
+    {
+        _menuTime += dt;
+        float x = _menuX0 + _menuTime * 25f;
+        float gh = Terrain.Height(x);
+        Camera.Position = new Vector3(x, gh + 90f, 260f);
+        Camera.LookAt(new Vector3(x + 120f, gh + 40f, 0f), Vector3.Up);
+    }
+
+    void BackToMenu()
+    {
+        Settings.SkipMenu = false;
+        GetTree().ReloadCurrentScene();
     }
 
     public override void _Process(double delta)
     {
         float dt = (float)delta;
+        if (InMenu)
+        {
+            UpdateMenuCamera(dt);
+            return;
+        }
+        // A few seconds of the battlefield after the last shot, then the ending.
+        if ((State == GameState.Victory || State == GameState.Overrun) && !_endingShown && StateTime > 3f)
+        {
+            ShowEnding();
+            return;
+        }
+        if (Input.IsActionJustPressed("main_menu") && (Paused || State != GameState.Play))
+        {
+            BackToMenu();
+            return;
+        }
         if (Input.IsActionJustPressed("restart"))
         {
             GetTree().ReloadCurrentScene();
@@ -91,7 +250,7 @@ public partial class Game : Node3D
 
     public override void _PhysicsProcess(double delta)
     {
-        if (Paused)
+        if (Paused || InMenu)
             return;
         float dt = (float)delta;
         StateTime += dt;
@@ -155,10 +314,11 @@ public partial class Game : Node3D
         {
             [UnitKind.Tank] = 2 + Wave,
             [UnitKind.Truck] = 2 + Wave,
-            [UnitKind.Aaa] = 1 + Wave / 2,
-            [UnitKind.Sam] = Wave / 2,
+            [UnitKind.Aaa] = Settings.Difficulty == Difficulty.Easy ? Wave / 2 : 1 + Wave / 2,
+            [UnitKind.Sam] = Settings.Difficulty == Difficulty.Easy ? Wave / 3 : Wave / 2,
         };
         var order = new List<UnitKind>();
+        EnemiesSpawned += comp.Values.Sum();
         foreach (var (k, n) in comp)
             for (int i = 0; i < n; i++)
                 order.Add(k);
@@ -751,6 +911,7 @@ public partial class Game : Node3D
             Kills++;
             if (byPlayer)
             {
+                PlayerKills++;
                 Score += u.Value;
                 Msg($"SPLASH {u.DisplayName}  +{u.Value}", new Color(0.6f, 1.0f, 0.6f), 3f);
             }
@@ -770,15 +931,23 @@ public partial class Game : Node3D
     /// Ends the game when the jet is lost. The jet just disappears.
     public void OnJetDestroyed(string reason)
     {
+        Msg(reason, new Color(1, 0.3f, 0.2f), 8f);
+        if (State != GameState.Play)
+            return;   // the mission already ended
         State = GameState.Dead;
         StateTime = 0f;
-        Msg(reason, new Color(1, 0.3f, 0.2f), 8f);
     }
 
     void UpdateWaves(float dt)
     {
         if (State != GameState.Play)
             return;
+        if (FriendlyStart > 0 && CountTeam(0) == 0)
+        {
+            Msg("ALL FRIENDLY TANKS DESTROYED", new Color(1, 0.3f, 0.2f), 6f);
+            EndMission(GameState.Overrun);
+            return;
+        }
         if (!WaveActive)
         {
             WaveTimer -= dt;
@@ -791,7 +960,18 @@ public partial class Game : Node3D
             WaveActive = false;
             WaveTimer = 25f;
             Score += 300 * Wave;
-            Msg($"WAVE {Wave} CLEARED  +{300 * Wave}  -  land on the runway to rearm", new Color(0.6f, 1.0f, 0.6f), 7f);
+            if (Wave >= MissionWaves)
+            {
+                Msg($"WAVE {Wave} CLEARED  +{300 * Wave}  -  REINFORCEMENTS HAVE ARRIVED!", new Color(0.6f, 1.0f, 0.6f), 7f);
+                EndMission(GameState.Victory);
+            }
+            else if (Settings.AirRearm)
+            {
+                Jet.Rearm();
+                Msg($"WAVE {Wave} CLEARED  +{300 * Wave}  -  rearmed, refueled and repaired", new Color(0.6f, 1.0f, 0.6f), 7f);
+            }
+            else
+                Msg($"WAVE {Wave} CLEARED  +{300 * Wave}  -  land on the runway to rearm", new Color(0.6f, 1.0f, 0.6f), 7f);
         }
     }
 

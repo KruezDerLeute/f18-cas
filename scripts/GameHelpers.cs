@@ -23,6 +23,7 @@ public partial class Game : Node3D
             ["restart"] = new[] { Key.R },
             ["help"] = new[] { Key.H },
             ["pause"] = new[] { Key.P, Key.Escape },
+            ["main_menu"] = new[] { Key.Enter, Key.KpEnter },
             ["zoom_in"] = new[] { Key.Equal, Key.KpAdd },
             ["zoom_out"] = new[] { Key.Minus, Key.KpSubtract },
         };

@@ -11,6 +11,8 @@ public partial class Game : Node3D
     public const float FlareK = 2.5e-3f;
     const int MaxDebris = 140;
     const int MaxScorch = 60;
+    /// Waves to clear for the reinforcements to arrive and the mission to be won.
+    public const int MissionWaves = 1;   // TEMP: testing the ending. Set back to 3.
 
     [ExportGroup("Units")]
     [Export] public PackedScene TankScene;
@@ -40,18 +42,27 @@ public partial class Game : Node3D
     readonly List<RigidBody3D> _debris = new();
     readonly List<MeshInstance3D> _scorch = new();
     public readonly List<Message> Messages = new();
-    public int Wave = 2;   // TEMP: skip to wave 2. Set back to 0 (or remove "= 1") to start at wave 1.
+    public int Wave;
     public float WaveTimer = 8f;
     public bool WaveActive;
     public int Score;
     public int Kills;
     public int FriendlyKills;
+    public int PlayerKills;
+    public int EnemiesSpawned;
+    public int FriendlyStart;
+    bool _endingShown;
     public float Shake;
     float _zoom = 1f;
     public float CamDist = 220f;
     float _baseFov = 50f;
     Vector2 _camOffset;
     public bool Paused;
+    /// True while the title screen or briefing is up: nothing simulates and the HUD is hidden.
+    public bool InMenu;
+    CanvasLayer _menuLayer;
+    float _menuTime;
+    float _menuX0 = 2200f;
     public GameState State = GameState.Play;
     public float StateTime;
     public bool ShowHelp = true;

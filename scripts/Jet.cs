@@ -112,7 +112,7 @@ public partial class Jet : Node3D, ITarget
     public void Init(Game main)
     {
         Main = main;
-        if (StartOnRunway)
+        if (StartOnRunway && !Settings.StartInAir)
             ToRunwayStart();
         else
         {
@@ -198,7 +198,7 @@ public partial class Jet : Node3D, ITarget
         _shockCone = new CpuParticles3D
         {
             Mesh = Main.SmokeQuad,
-            Amount = 10000,
+            Amount = 15000,
             Lifetime = 0.22,
             LocalCoords = true,
             Emitting = false,
@@ -312,6 +312,16 @@ public partial class Jet : Node3D, ITarget
             GearDown = !GearDown;
             Main.Msg("GEAR " + (GearDown ? "DOWN" : "UP"), new Color(0.6f, 0.9f, 1.0f), 2f);
         }
+        if (Settings.StallProtection && !OnGround && !GearDown && Vel.Length() < 110f && Fuel > 0f)
+            Throttle = Mathf.Max(Throttle, 1.25f);
+        // Auto-GCAS: about to fly into the ground (and not landing), so roll
+        // upright and pull up, like the real system in modern fighters.
+        if (Settings.AutoGcas && !GearDown && Main.PullUpWarning())
+        {
+            if (Mathf.Cos(_phiTarget) < 0f)
+                _phiTarget += Mathf.Pi;
+            _stick = UpSign();
+        }
         _phi = Mathf.MoveToward(_phi, _phiTarget, dt * 3.8f);
         if (_phi == _phiTarget && _phi >= Mathf.Tau)
         {
@@ -365,7 +375,7 @@ public partial class Jet : Node3D, ITarget
         else
         {
             float aTrim = ((m * G * perp.Y / qs) - flaps * us) / claEff;
-            float aPos = Mathf.Min(AlphaLimit, (GLimit * m * G / qs - flaps) / claEff);
+            float aPos = Mathf.Min(Settings.StallProtection ? AlphaStall - 0.05f : AlphaLimit, (GLimit * m * G / qs - flaps) / claEff);
             float aNeg = Mathf.Min(0.3f, (-GNeg * m * G / qs + flaps) / claEff);
             float trimB = Mathf.Clamp(aTrim * us, -aNeg, aPos);
             float cmdB = trimB;
@@ -407,7 +417,8 @@ public partial class Jet : Node3D, ITarget
             thrustNow *= Mathf.Pow(dens, 0.7f) * (1f + 0.2f * Mach);
             if (Hp < 30f)
                 thrustNow *= 0.6f;
-            Fuel = Mathf.Max(Fuel - thrustNow * (EngineSpool > 1f ? 5.2e-5f : 2.3e-5f) * h, 0f);
+            if (!Settings.UnlimitedFuel)
+                Fuel = Mathf.Max(Fuel - thrustNow * (EngineSpool > 1f ? 5.2e-5f : 2.3e-5f) * h, 0f);
         }
         var thrust = Fwd() * thrustNow;
 
@@ -510,7 +521,7 @@ public partial class Jet : Node3D, ITarget
             RearmTimer = 0f;
     }
 
-    void Rearm()
+    public void Rearm()
     {
         Ammo = MaxAmmo;
         Bombs = MaxBombs;
@@ -544,6 +555,7 @@ public partial class Jet : Node3D, ITarget
     {
         if (!Alive)
             return;
+        d *= Settings.DamageTaken;
         Hp -= d;
         // Bigger hits flash harder; even a graze is noticeable.
         HitFlash = Mathf.Max(HitFlash, Mathf.Clamp(0.35f + d / 40f, 0.35f, 1f));

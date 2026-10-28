@@ -3,3 +3,6 @@
 [ext_resource type="PackedScene" uid="uid://bg3j0osiq0qel" path="res://assets/terrain.glb" id="1_206su"]
 
 [node name="Terrain" unique_id=355571285 instance=ExtResource("1_206su")]
+
+[node name="Ground" parent="." index="0" unique_id=1102984737]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2753868, 1.7231903, -1.0632997)

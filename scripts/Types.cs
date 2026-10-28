@@ -12,7 +12,7 @@ public enum UnitKind { Tank, Truck, Aaa, Sam, FriendlyTank }
 
 public enum ShellKind { Bullet, Shell, Aaa, Bomb, Flare }
 
-public enum GameState { Play, Dead, Overrun }
+public enum GameState { Play, Dead, Overrun, Victory }
 
 /// One line in the message feed at the top of the screen.
 public class Message

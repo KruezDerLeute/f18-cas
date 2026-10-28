@@ -85,26 +85,26 @@
     ]
   },
   "packageFolders": {
-    "/home/kami/.nuget/packages/": {}
+    "/home/kaminnit/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/kami/Documents/game/f18-cas/F18Cas.csproj",
+      "projectUniqueName": "/home/kaminnit/Documents/3rd_year/game/f18-cas/F18Cas.csproj",
       "projectName": "F18Cas",
-      "projectPath": "/home/kami/Documents/game/f18-cas/F18Cas.csproj",
-      "packagesPath": "/home/kami/.nuget/packages/",
-      "outputPath": "/home/kami/Documents/game/f18-cas/.godot/mono/temp/obj/",
+      "projectPath": "/home/kaminnit/Documents/3rd_year/game/f18-cas/F18Cas.csproj",
+      "packagesPath": "/home/kaminnit/.nuget/packages/",
+      "outputPath": "/home/kaminnit/Documents/3rd_year/game/f18-cas/.godot/mono/temp/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/home/kami/.nuget/NuGet/NuGet.Config"
+        "/home/kaminnit/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
       ],
       "sources": {
-        "/usr/lib/dotnet/library-packs": {},
-        "https://api.nuget.org/v3/index.json": {}
+        "/home/kaminnit/Godot_v4.7.2-stable_mono_linux_x86_64/GodotSharp/Tools/nupkgs": {},
+        "/usr/lib/dotnet/library-packs": {}
       },
       "frameworks": {
         "net8.0": {

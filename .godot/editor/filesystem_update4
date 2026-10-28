@@ -9,3 +9,8 @@ res://scripts/Terrain.cs
 res://scripts/Game.cs
 res://scripts/Flir.cs
 res://terrain.tscn
+res://scripts/Menu.cs
+res://scripts/Briefing.cs
+res://scripts/Cutscene.cs
+res://scripts/Debrief.cs
+res://scenes/jet.tscn

@@ -90,8 +90,11 @@ public partial class Hud : Control
 		if (Main.ShowHelp)
 			DrawHelp();
 		if (Main.Paused)
+		{
 			CTxt(new Vector2(Size.X * 0.5f, Size.Y * 0.42f), "PAUSED", 40, CHud);
-		if (Main.State != GameState.Play)
+			CTxt(new Vector2(Size.X * 0.5f, Size.Y * 0.42f + 40f), "P resume    ENTER main menu", 20, CAmber);
+		}
+		if (Main.State == GameState.Dead)
 			DrawEnd();
 	}
 
@@ -405,7 +408,7 @@ public partial class Hud : Control
 		float y = 40f;
 		Txt(new Vector2(x, y), $"SCORE  {Main.Score}", 20, CHud);
 		y += 26f;
-		Txt(new Vector2(x, y), $"WAVE   {Main.Wave}", 16, CHud);
+		Txt(new Vector2(x, y), $"WAVE   {Main.Wave} / {Game.MissionWaves}", 16, CHud);
 		y += 22f;
 		Txt(new Vector2(x, y), $"HOSTILE  {Main.CountTeam(1)}", 16, CWarn);
 		y += 22f;
@@ -530,10 +533,10 @@ public partial class Hud : Control
 	void DrawEnd()
 	{
 		DrawRect(new Rect2(Vector2.Zero, Size), new Color(0, 0, 0, Mathf.Clamp(Main.StateTime * 0.3f, 0f, 0.45f)));
-		string title = Main.State == GameState.Dead ? "AIRCRAFT LOST" : "FRIENDLY POSITION OVERRUN";
+		const string title = "AIRCRAFT LOST";
 		var c = new Vector2(Size.X * 0.5f, Size.Y * 0.4f);
 		CTxt(c, title, 44, CWarn);
 		CTxt(c + new Vector2(0, 50), $"Score {Main.Score}    Waves survived {Mathf.Max(Main.Wave - 1, 0)}    Kills {Main.Kills}", 20, CHud);
-		CTxt(c + new Vector2(0, 90), "Press R to fly again", 20, CAmber);
+		CTxt(c + new Vector2(0, 90), "R fly again    ENTER main menu", 20, CAmber);
 	}
 }
