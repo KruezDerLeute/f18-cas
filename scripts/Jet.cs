@@ -195,6 +195,7 @@ public partial class Jet : Node3D, ITarget
             float a = GD.Randf() * Mathf.Tau;
             conePts[i] = new Vector3(Mathf.Lerp(1.5f, -5.5f, t), -0.4f + Mathf.Cos(a) * r, Mathf.Sin(a) * r);
         }
+
         _shockCone = new CpuParticles3D
         {
             Mesh = Main.SmokeQuad,
