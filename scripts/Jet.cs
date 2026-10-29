@@ -99,8 +99,6 @@ public partial class Jet : Node3D, ITarget
     float _coneFlash;   // seconds left on the vapour cone after crossing Mach 1
     const float ConeFlashTime = 3.6f;
     CpuParticles3D _smoke;
-    CpuParticles3D _streaks;
-    QuadMesh _streakQuad;
     CpuParticles3D _spray;
     readonly List<Node3D> _gearOn = new();
     readonly List<Node3D> _gearOff = new();
@@ -229,36 +227,6 @@ public partial class Jet : Node3D, ITarget
         _smoke.Emitting = false;
         _smoke.Position = GetNode<Node3D>("Roll/SmokePoint").Position;
         _rollNode.AddChild(_smoke);
-
-        // Air streaks: thin lines hanging still in the air between the camera
-        // and the jet, so at speed they flash past. Added to Game, not the jet,
-        // so the emission box doesn't pitch with it. SpeedCues() moves the box
-        // and sizes it to the camera view every frame.
-        var streakMat = new StandardMaterial3D
-        {
-            ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-            BillboardMode = BaseMaterial3D.BillboardModeEnum.Particles,
-            VertexColorUseAsAlbedo = true,
-            Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
-            AlbedoTexture = Main.ParticleSoft,
-        };
-        _streaks = new CpuParticles3D
-        {
-            Mesh = _streakQuad = new QuadMesh { Size = new Vector2(1f, 0.02f), Material = streakMat },
-            Amount = 300,
-            Lifetime = 0.6,
-            LocalCoords = false,
-            Emitting = false,
-            EmissionShape = CpuParticles3D.EmissionShapeEnum.Box,
-            EmissionBoxExtents = new Vector3(220f, 130f, 65f),
-            InitialVelocityMin = 0f,
-            InitialVelocityMax = 0f,
-            Gravity = Vector3.Zero,
-            ColorRamp = Fx.Ramp(new[] { 0f, 0.3f, 1f },
-                    new[] { new Color(1, 1, 1, 0f), new Color(1, 1, 1, 0.85f), new Color(1, 1, 1, 0f) }),
-            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
-        };
-        Main.AddChild(_streaks);
 
         // Dust kicked up off the ground on a fast, very low pass.
         _spray = Main.MakeParticles(Main.SmokeQuad, 160, 1.8f, new Vector2(8, 25), new Vector2(4, 10),
@@ -552,6 +520,38 @@ public partial class Jet : Node3D, ITarget
         GLoad = 1f;
     }
 
+    Vector2 _savedPos, _savedVel;
+    float _savedTheta, _savedThrottle, _savedSpool;
+    bool _savedGear, _savedAirbrake, _savedOnGround;
+
+    /// Remember the start state before the briefing borrows the jet for a fly-by.
+    public void SaveStart()
+    {
+        _savedPos = Pos;
+        _savedVel = Vel;
+        _savedTheta = Theta;
+        _savedThrottle = Throttle;
+        _savedSpool = EngineSpool;
+        _savedGear = GearDown;
+        _savedAirbrake = Airbrake;
+        _savedOnGround = OnGround;
+    }
+
+    /// Put the jet back where SaveStart() found it.
+    public void RestoreStart()
+    {
+        Pos = _savedPos;
+        Vel = _savedVel;
+        Theta = _savedTheta;
+        Throttle = _savedThrottle;
+        EngineSpool = _savedSpool;
+        GearDown = _savedGear;
+        Airbrake = _savedAirbrake;
+        OnGround = _savedOnGround;
+        _phi = _phiTarget = 0f;
+        UpdateVisual();
+    }
+
     /// Title-screen fly-by: cruises over the terrain in full afterburner,
     /// rocking its wings gently. No physics, input or weapons.
     public void StartFlyby()
@@ -603,33 +603,14 @@ public partial class Jet : Node3D, ITarget
         foreach (var v in _vapor)
             v.Emitting = false;
         _shockCone.Emitting = false;
-        _streaks.Emitting = false;
         _spray.Emitting = false;
         Main.OnJetDestroyed(reason);
     }
 
-    /// Air streaks above about Mach 0.6, and a dust trail under the jet when
-    /// it's fast and very low.
+    /// A dust trail under the jet when it's fast and very low.
     void SpeedCues()
     {
         float v = Vel.Length();
-        // Fade in from Mach 0.3 (about 370 km/h), full strength from Mach 0.75.
-        float st = Mathf.SmoothStep(0.3f, 0.75f, Mach);
-        _streaks.Emitting = st > 0.01f;
-        _streaks.Color = new Color(1, 1, 1, st);
-        // Billboard angles turn the other way to the jet's pitch.
-        _streaks.AngleMin = _streaks.AngleMax = -Mathf.RadToDeg(Vel.Angle());
-        // Fill the camera's view: a box between the camera and the jet, a bit
-        // ahead so the jet flies into the streaks. The camera pulls back as the
-        // jet climbs (hundreds of metres), so the box and the streak length
-        // scale with that distance to look the same on screen at any height.
-        float cd = Main.CamDist;
-        _streaks.EmissionBoxExtents = new Vector3(cd * 0.9f, cd * 0.5f, cd * 0.3f);
-        _streakQuad.Size = new Vector2(cd * 0.14f, cd * 0.003f);
-        _streaks.ScaleAmountMin = 0.6f;
-        _streaks.ScaleAmountMax = 1.4f;
-        _streaks.Position = new Vector3(Pos.X + Vel.X * 0.35f, Pos.Y + Vel.Y * 0.35f, cd * 0.4f);
-
         float low = OnGround ? 0f : 1f - Mathf.SmoothStep(8f, 35f, Agl);
         float sp = low * Mathf.SmoothStep(120f, 300f, v);
         _spray.Emitting = sp > 0.01f;
@@ -876,7 +857,15 @@ public partial class Jet : Node3D, ITarget
     {
         Position = new Vector3(Pos.X, Pos.Y, 0f);
         Rotation = new Vector3(0, 0, Theta);
-        _rollNode.Rotation = new Vector3(_phi, 0, 0);
+        // _rollNode.Rotation = new Vector3(_phi, 0, 0);
+
+        // Gentle wobble so the jet doesn't look glued to the sky. Visual only.
+        float t = Time.GetTicksMsec() / 1000f;
+        float wobble = OnGround ? 0f : 1f;
+        float roll = (Mathf.Sin(t * 1.1f) * 0.04f + Mathf.Sin(t * 2.7f) * 0.015f) * wobble;
+        float yaw = Mathf.Sin(t * 0.8f) * 0.02f * wobble;
+        _rollNode.Rotation = new Vector3(_phi + roll, yaw, 0);
+
         foreach (var g in _gearOn)
             g.Visible = GearDown;
         foreach (var g in _gearOff)

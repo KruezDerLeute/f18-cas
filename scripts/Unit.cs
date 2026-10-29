@@ -108,6 +108,13 @@ public partial class Unit : Node3D, ITarget
         CPos = new Vector2(X, h + CenterHeight);
     }
 
+    /// Ending cutscene: rolls forward at the given speed, ignoring StopX and the AI.
+    public void Drive(float dt, float speed)
+    {
+        X += _facing * speed * dt;
+        Place();
+    }
+
     Vector2 MuzzlePos() => CPos + new Vector2(_facing * 5.5f, 0.9f);
 
     // ---------------------------------------------------------------- AI

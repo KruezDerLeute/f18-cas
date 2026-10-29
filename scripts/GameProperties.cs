@@ -19,6 +19,8 @@ public partial class Game : Node3D
     [Export] public PackedScene TruckScene;
     [Export] public PackedScene AaaScene;
     [Export] public PackedScene SamScene;
+    /// Friendly tank for the reinforcement column in the victory ending.
+    [Export] public PackedScene FriendlyTankScene;
     [ExportGroup("Weapons")]
     [Export] public PackedScene MaverickScene;
     [Export] public PackedScene SamMissileScene;
@@ -30,6 +32,13 @@ public partial class Game : Node3D
     [Export] public PackedScene MenuScene;
     /// AWACS voice line played over the mission briefing.
     [Export] public AudioStream BriefingVoice;
+    /// Seconds into BriefingVoice where it says "You are Viper 1": the camera cuts to the jet.
+    [Export] public float BriefingJetShotTime = 15.6f;
+
+    /// Briefing voice for Normal mode (falls back to BriefingVoice if empty).
+    [Export] public AudioStream BriefingVoiceNormal;
+    [Export] public float BriefingJetShotTimeNormal = 12.1f;
+
     /// Ground's radio call over the victory ending (it says every tank made it).
     [Export] public AudioStream VictoryVoice;
 
@@ -59,6 +68,7 @@ public partial class Game : Node3D
     public int FriendlyStart;
     bool _endingShown;
     public float Shake;
+    bool _abWasOn;
     float _zoom = 1f;
     public float CamDist = 220f;
     float _baseFov = 50f;
@@ -71,6 +81,14 @@ public partial class Game : Node3D
     float _menuX0 = 2200f;
     /// Title screen: the camera rides behind the jet instead of panning the battlefield.
     bool _flyby;
+    /// Briefing: when (in _menuTime) to switch to the fly-by shot; negative = never.
+    float _jetShotAt = -1f;
+    /// The fly-by is the briefing's shot of the jet (front quarter), not the title screen's chase view.
+    bool _briefShot;
+    /// Victory ending: reinforcement column driving in from the west (scenery
+    /// only, not in Units, so it isn't counted or targeted).
+    readonly List<Unit> _convoy = new();
+    readonly List<float> _convoyStop = new();
     public GameState State = GameState.Play;
     public float StateTime;
     public bool ShowHelp = true;

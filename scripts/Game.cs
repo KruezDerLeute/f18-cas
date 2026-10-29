@@ -112,6 +112,13 @@ public partial class Game : Node3D
             ContinueText = "ДААЛГАВАР ЭХЛҮҮЛЭХ",
             OnDone = () =>
             {
+                _jetShotAt = -1f;
+                if (_flyby)
+                {
+                    _flyby = false;
+                    _briefShot = false;
+                    Jet.RestoreStart();
+                }
                 InMenu = false;
                 _hud.Visible = true;
                 _menuLayer.QueueFree();
@@ -120,12 +127,21 @@ public partial class Game : Node3D
         };
         OpenOverlay(briefing);
 
-        // A child of the briefing, so it stops when the player starts the mission.
-        if (BriefingVoice != null)
+        // Each difficulty can have its own recording, with its own camera cut time.
+        // The player is a child of the briefing, so it stops when the mission starts.
+        var voiceStream = BriefingVoice;
+        float shotTime = BriefingJetShotTime;
+        if (Settings.Difficulty == Difficulty.Normal && BriefingVoiceNormal != null)
         {
-            var voice = new AudioStreamPlayer { Stream = BriefingVoice };
+            voiceStream = BriefingVoiceNormal;
+            shotTime = BriefingJetShotTimeNormal;
+        }
+        if (voiceStream != null)
+        {
+            var voice = new AudioStreamPlayer { Stream = voiceStream };
             briefing.AddChild(voice);
             voice.Play();
+            _jetShotAt = shotTime;
         }
     }
 
@@ -186,6 +202,8 @@ public partial class Game : Node3D
             },
         };
         OpenOverlay(ending);
+        if (won)
+            SpawnConvoy();
 
         // The recording says every tank made it, so only play it on a perfect run.
         if (won && saved == FriendlyStart && VictoryVoice != null)
@@ -215,6 +233,19 @@ public partial class Game : Node3D
     void UpdateMenuCamera(float dt)
     {
         _menuTime += dt;
+        // Briefing: cut to the player's jet when the voice names it.
+        if (_jetShotAt >= 0f && _menuTime >= _jetShotAt)
+        {
+            _jetShotAt = -1f;
+            Jet.SaveStart();
+            _flyby = true;
+            _briefShot = true;
+        }
+        if (_convoy.Count > 0)
+        {
+            UpdateConvoyCamera(dt);
+            return;
+        }
         if (_flyby)
         {
             UpdateFlybyCamera(dt);
@@ -226,17 +257,79 @@ public partial class Game : Node3D
         Camera.LookAt(new Vector3(x + 120f, gh + 40f, 0f), Vector3.Up);
     }
 
+    /// Victory ending: tanks and trucks roll in from the west and pull up in a
+    /// line just behind the friendly platoon.
+    void SpawnConvoy()
+    {
+        var scenes = new[] { FriendlyTankScene, FriendlyTankScene, TruckScene, FriendlyTankScene, TruckScene, FriendlyTankScene };
+        const float gap = 28f;
+        // The lead vehicle stops a little behind the westernmost friendly tank.
+        float firstStop = Units.Where(u => u.Team == 0).Select(u => u.X).DefaultIfEmpty(FriendlyLine).Min() - 35f;
+        for (int i = 0; i < scenes.Length; i++)
+        {
+            if (scenes[i] == null)
+                continue;
+            var u = scenes[i].Instantiate<Unit>();
+            u.Team = 0;   // the truck scene is an enemy truck by default; this makes it face east
+            _unitsNode.AddChild(u);
+            float stop = firstStop - i * gap;
+            u.Init(this, stop - 260f, i % 2 == 0 ? -6f : 3f);
+            _convoy.Add(u);
+            _convoyStop.Add(stop);
+        }
+    }
+
+    /// Rides alongside the column, just behind its lead vehicle, from the
+    /// player's side of the lane. The column slows to a stop at its places.
+    void UpdateConvoyCamera(float dt)
+    {
+        const float speed = 12f;
+        for (int i = 0; i < _convoy.Count; i++)
+        {
+            float left = _convoyStop[i] - _convoy[i].X;
+            float s = speed * Mathf.Clamp(left / 30f, 0f, 1f);
+            if (s > 0.05f)
+                _convoy[i].Drive(dt, s);
+        }
+        float x = _convoy[0].X - 45f;
+        Camera.Position = new Vector3(x, Terrain.Height(x) + 14f, 70f);
+        Camera.LookAt(new Vector3(x + 35f, Terrain.Height(x + 35f) + 2f, 0f), Vector3.Up);
+    }
+
     /// Close behind the afterburners. The camera sits a little to the jet's
     /// left and looks straight ahead, so the jet fills the right half of the
     /// screen, clear of the menu on the left.
     void UpdateFlybyCamera(float dt)
     {
-        Jet.Flyby(dt, _menuTime);
+        // A jet waiting on the runway (Realistic briefing) stays parked.
+        if (!Jet.OnGround)
+            Jet.Flyby(dt, _menuTime);
         var p = new Vector3(Jet.Pos.X, Jet.Pos.Y, 0f);
         var sway = new Vector3(0f, Mathf.Sin(_menuTime * 1.3f) * 0.6f, Mathf.Sin(_menuTime * 0.8f) * 1.2f);
         var shake = new Vector3(Fx.Rand(-1, 1), Fx.Rand(-1, 1), 0) * 0.06f;
+        if (_briefShot)
+        {
+            UpdateBriefShot(p, sway + shake);
+            return;
+        }
         Camera.Position = p + new Vector3(-24f, 3.5f, -10f) + sway + shake;
         Camera.LookAt(Camera.Position + new Vector3(100f, -4f, 0f), Vector3.Up);
+    }
+
+    /// Briefing shot of the player's jet: ahead of it and off to the side,
+    /// looking back at the nose from a little above the wing. The aim point
+    /// is shifted left so the jet sits in the right half of the screen, clear
+    /// of the briefing text on the left.
+    void UpdateBriefShot(Vector3 jet, Vector3 wobble)
+    {
+        const float angle = 0.7f;      // radians around from the side (0 = straight side-on)
+        const float dist = 34f;
+        float yaw = angle + Mathf.Sin(_menuTime * 0.25f) * 0.05f;   // slow drift around the jet
+        var dir = new Vector3(Mathf.Sin(yaw), 0f, Mathf.Cos(yaw));
+        Camera.Position = jet + dir * dist + new Vector3(0f, 4f, 0f) + wobble;
+        // The camera's right; aiming left of the jet pushes it to the right on screen.
+        var right = new Vector3(dir.Z, 0f, -dir.X);
+        Camera.LookAt(jet - right * 9f + new Vector3(0f, 1f, 0f), Vector3.Up);
     }
 
     void BackToMenu()
@@ -1060,5 +1153,16 @@ public partial class Game : Node3D
         // Keep the sun's shadow map centred on the action.
         if (_sun != null)
             _sun.DirectionalShadowMaxDistance = Mathf.Clamp(CamDist * 2.5f, 600f, 4000f);
+
+        // Afterburner: a kick when it lights, then a light rumble while it burns.
+        float ab = Jet.Alive && Jet.Fuel > 0f ? Mathf.Clamp((Jet.EngineSpool - 1f) / 0.25f, 0f, 1f) : 0f;
+        bool abOn = ab > 0.5f;
+        if (!Paused)
+        {
+            Shake = Mathf.Max(Shake, ab * 0.15f);
+            if (abOn && !_abWasOn)
+                Shake = Mathf.Max(Shake, 1.0f);
+        }
+        _abWasOn = abOn;
     }
 }

@@ -9,9 +9,12 @@ public partial class Clouds : Node3D
     [Export] public int Count = 70;
     /// Same seed = same sky every time.
     [Export] public int Seed = 5;
-    /// Thin low wisps right around the lane, at the heights you fly: close
-    /// enough to whip past (or punch through), which shows off your speed.
-    [Export] public int WispCount = 90;
+    /// Thin low wisps at the heights you fly, scattered from the lane back to
+    /// WispDepth metres behind it. The near ones whip past (or get punched
+    /// through) and show off your speed; the spread keeps them from lining up
+    /// into a row when a camera looks along the lane (the briefing fly-by).
+    [Export] public int WispCount = 160;
+    [Export] public float WispDepth = 1500f;
     [Export] public Vector2 WispHeight = new(250f, 1600f);
 
     public override void _Ready()
@@ -49,7 +52,7 @@ public partial class Clouds : Node3D
         {
             float cx = rng.RandfRange(-4000f, 16000f);
             float cy = rng.RandfRange(WispHeight.X, WispHeight.Y);
-            float cz = rng.RandfRange(-90f, 40f);
+            float cz = rng.RandfRange(-WispDepth, 40f);
             for (int k = 0; k < 3; k++)
             {
                 float s = rng.RandfRange(70f, 180f);
