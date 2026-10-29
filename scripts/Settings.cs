@@ -11,6 +11,13 @@ public static class Settings
     /// Set when a difficulty is picked, so the briefing plays once (R restarts skip it).
     public static bool ShowBriefing;
 
+    public static string DifficultyName => Difficulty switch
+    {
+        Difficulty.Easy => "ХЯЛБАР",
+        Difficulty.Normal => "ДУНД",
+        _ => "БОДИТ",
+    };
+
     /// Start flying towards the front instead of parked on the runway.
     public static bool StartInAir => Difficulty != Difficulty.Realistic;
     /// Fly-by-wire won't let the wing stall, and adds throttle when too slow.

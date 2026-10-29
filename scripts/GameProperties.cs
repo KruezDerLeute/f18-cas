@@ -69,6 +69,8 @@ public partial class Game : Node3D
     CanvasLayer _menuLayer;
     float _menuTime;
     float _menuX0 = 2200f;
+    /// Title screen: the camera rides behind the jet instead of panning the battlefield.
+    bool _flyby;
     public GameState State = GameState.Play;
     public float StateTime;
     public bool ShowHelp = true;

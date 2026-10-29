@@ -99,5 +99,4 @@ public partial class Game : Node3D
         _growCurve.AddPoint(new Vector2(0.3f, 0.8f));
         _growCurve.AddPoint(new Vector2(1f, 1f));
     }
-
 }

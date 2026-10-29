@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bki6f7ji164ot"]
 
 [ext_resource type="Script" uid="uid://b1h2pkv23714w" path="res://scripts/Game.cs" id="1_game"]
-[ext_resource type="PackedScene" path="res://scenes/world.tscn" id="2_world"]
+[ext_resource type="PackedScene" uid="uid://cn0sowoh1pxfb" path="res://scenes/world.tscn" id="2_world"]
 [ext_resource type="PackedScene" uid="uid://4o8rgsunfkbp" path="res://scenes/jet.tscn" id="3_jet"]
 [ext_resource type="PackedScene" path="res://scenes/units/t72.tscn" id="5_t72"]
 [ext_resource type="PackedScene" path="res://scenes/units/truck.tscn" id="6_truck"]
@@ -16,8 +16,8 @@
 [ext_resource type="Script" uid="uid://bbedxdrmiq22g" path="res://scripts/Hud.cs" id="15_hud"]
 [ext_resource type="PackedScene" path="res://scenes/units/m1a2.tscn" id="16_m1a2"]
 [ext_resource type="PackedScene" path="res://scenes/menu.tscn" id="17_menu"]
-[ext_resource type="AudioStream" path="res://assets/sounds/awacs_mission_brief.ogg" id="18_brief"]
-[ext_resource type="AudioStream" path="res://assets/sounds/awacs_ending.ogg" id="19_victory"]
+[ext_resource type="AudioStream" uid="uid://dmug0dynqwv55" path="res://assets/sounds/awacs_mission_brief.ogg" id="18_brief"]
+[ext_resource type="AudioStream" uid="uid://du3xpdcmgyxit" path="res://assets/sounds/awacs_ending.ogg" id="19_victory"]
 
 [node name="Game" type="Node3D" unique_id=831673852]
 script = ExtResource("1_game")

@@ -37,8 +37,8 @@ public partial class Debrief : Control
 		v.AddThemeConstantOverride("separation", 8);
 		panel.AddChild(v);
 
-		v.AddChild(MakeLabel("DEBRIEF  -  OPERATION IRON SHIELD", 16, CAmber));
-		v.AddChild(MakeLabel(Won ? "MISSION COMPLETE" : "MISSION FAILED", 36, Won ? CHud : CWarn));
+		v.AddChild(MakeLabel("ДҮГНЭЛТ  -  \"ТӨМӨР БАМБАЙ\" АЖИЛЛАГАА", 16, CAmber));
+		v.AddChild(MakeLabel(Won ? "ДААЛГАВАР БИЕЛЛЭЭ" : "ДААЛГАВАР БҮТЭЛГҮЙТЛЭЭ", 36, Won ? CHud : CWarn));
 		v.AddChild(new HSeparator());
 
 		var grid = new GridContainer { Columns = 2 };
@@ -46,17 +46,17 @@ public partial class Debrief : Control
 		grid.AddThemeConstantOverride("v_separation", 6);
 		v.AddChild(grid);
 		int cleared = Won ? Game.MissionWaves : Mathf.Max(Main.Wave - (Main.WaveActive ? 1 : 0), 0);
-		Row(grid, "Difficulty", Settings.Difficulty.ToString().ToUpper());
-		Row(grid, "Waves cleared", $"{cleared} / {Game.MissionWaves}");
-		Row(grid, "Enemies destroyed by you", $"{Main.PlayerKills} / {Main.EnemiesSpawned}");
-		Row(grid, "Friendly tanks saved", $"{Main.CountTeam(0)} / {Main.FriendlyStart}");
+		Row(grid, "Түвшин", Settings.DifficultyName);
+		Row(grid, "Няцаасан довтолгоо", $"{cleared} / {Game.MissionWaves}");
+		Row(grid, "Таны устгасан дайсан", $"{Main.PlayerKills} / {Main.EnemiesSpawned}");
+		Row(grid, "Аврагдсан танк", $"{Main.CountTeam(0)} / {Main.FriendlyStart}");
 		if (Main.FriendlyKills > 0)
-			Row(grid, "Friendly fire incidents", Main.FriendlyKills.ToString(), CWarn);
-		Row(grid, "Score", Main.Score.ToString());
+			Row(grid, "Өөрсдийгөө буудсан", Main.FriendlyKills.ToString(), CWarn);
+		Row(grid, "Оноо", Main.Score.ToString());
 
 		v.AddChild(new HSeparator());
 		var (rank, note) = Rank();
-		v.AddChild(MakeLabel("PILOT RANK", 14, CDim));
+		v.AddChild(MakeLabel("НИСГЭГЧИЙН ЦОЛ", 14, CDim));
 		v.AddChild(MakeLabel(rank, 40, CAmber));
 		v.AddChild(MakeLabel(note, 15, Colors.White));
 		v.AddChild(new Control { CustomMinimumSize = new Vector2(0, 8) });
@@ -64,10 +64,10 @@ public partial class Debrief : Control
 		var row = new HBoxContainer();
 		row.AddThemeConstantOverride("separation", 10);
 		v.AddChild(row);
-		var again = MakeButton("FLY AGAIN  (R)");
+		var again = MakeButton("ДАХИН НИСЭХ  (R)");
 		again.Pressed += () => OnFlyAgain?.Invoke();
 		row.AddChild(again);
-		var menu = MakeButton("MAIN MENU");
+		var menu = MakeButton("ҮНДСЭН ЦЭС");
 		menu.Pressed += () => OnMenu?.Invoke();
 		row.AddChild(menu);
 		again.CallDeferred(Control.MethodName.GrabFocus);
@@ -90,14 +90,14 @@ public partial class Debrief : Control
 		float r = kills * 45f + saved * 25f + (Won ? 20f : 0f) - Main.FriendlyKills * 10f
 			+ Settings.Difficulty switch { Difficulty.Normal => 5f, Difficulty.Realistic => 10f, _ => 0f };
 		if (r >= 85f)
-			return ("ACE", "Outstanding flying, Viper 1. The whole front is talking about you.");
+			return ("АС НИСГЭГЧ", "Гайхалтай нислэг, Вайпер 1. Бүх фронт таны тухай ярьж байна.");
 		if (r >= 70f)
-			return ("VETERAN", "Solid work. Command wants you leading the next strike.");
+			return ("ТУРШЛАГАТАН", "Сайн ажиллалаа. Командлал таныг дараагийн довтолгоог удирдаасай гэж байна.");
 		if (r >= 50f)
-			return ("FLIGHT LEAD", "You got the job done. Tighten up and you'll make Ace.");
+			return ("ХОСЛОЛЫН АХЛАГЧ", "Даалгавраа биелүүллээ. Арай нарийн ажиллавал Ас болно.");
 		if (r >= 30f)
-			return ("WINGMAN", "Rough sortie. Stick close to the green smoke and use your flares.");
-		return ("ROOKIE", "Back to flight school. Try EASY and take it one target at a time.");
+			return ("ХАМТРАГЧ НИСГЭГЧ", "Хэцүү нислэг байлаа. Ногоон утаанаас холдохгүй, хуурамч байгаа ашигла.");
+		return ("ШИНЭХЭН", "Нислэгийн сургууль руугаа буц. ХЯЛБАР түвшинг туршиж, нэг нэгээр нь бай устга.");
 	}
 
 	static void Row(GridContainer g, string label, string value, Color? col = null)

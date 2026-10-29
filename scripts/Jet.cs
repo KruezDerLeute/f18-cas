@@ -100,6 +100,7 @@ public partial class Jet : Node3D, ITarget
     const float ConeFlashTime = 3.6f;
     CpuParticles3D _smoke;
     CpuParticles3D _streaks;
+    QuadMesh _streakQuad;
     CpuParticles3D _spray;
     readonly List<Node3D> _gearOn = new();
     readonly List<Node3D> _gearOff = new();
@@ -229,9 +230,10 @@ public partial class Jet : Node3D, ITarget
         _smoke.Position = GetNode<Node3D>("Roll/SmokePoint").Position;
         _rollNode.AddChild(_smoke);
 
-        // Air streaks: faint thin lines hanging still in the air around the jet,
-        // so at speed they flash past. Added to Game, not the jet, so the
-        // emission box doesn't pitch with it.
+        // Air streaks: thin lines hanging still in the air between the camera
+        // and the jet, so at speed they flash past. Added to Game, not the jet,
+        // so the emission box doesn't pitch with it. SpeedCues() moves the box
+        // and sizes it to the camera view every frame.
         var streakMat = new StandardMaterial3D
         {
             ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
@@ -242,9 +244,9 @@ public partial class Jet : Node3D, ITarget
         };
         _streaks = new CpuParticles3D
         {
-            Mesh = new QuadMesh { Size = new Vector2(1f, 0.08f), Material = streakMat },
-            Amount = 220,
-            Lifetime = 0.5,
+            Mesh = _streakQuad = new QuadMesh { Size = new Vector2(1f, 0.02f), Material = streakMat },
+            Amount = 300,
+            Lifetime = 0.6,
             LocalCoords = false,
             Emitting = false,
             EmissionShape = CpuParticles3D.EmissionShapeEnum.Box,
@@ -252,10 +254,8 @@ public partial class Jet : Node3D, ITarget
             InitialVelocityMin = 0f,
             InitialVelocityMax = 0f,
             Gravity = Vector3.Zero,
-            ScaleAmountMin = 6f,
-            ScaleAmountMax = 14f,
             ColorRamp = Fx.Ramp(new[] { 0f, 0.3f, 1f },
-                    new[] { new Color(1, 1, 1, 0f), new Color(1, 1, 1, 0.5f), new Color(1, 1, 1, 0f) }),
+                    new[] { new Color(1, 1, 1, 0f), new Color(1, 1, 1, 0.85f), new Color(1, 1, 1, 0f) }),
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
         };
         Main.AddChild(_streaks);
@@ -304,14 +304,14 @@ public partial class Jet : Node3D, ITarget
         if (Input.IsActionJustPressed("airbrake"))
         {
             Airbrake = !Airbrake;
-            Main.Msg((OnGround ? "BRAKES " : "SPEEDBRAKE ") + (Airbrake ? "ON" : "OFF"), new Color(0.6f, 0.9f, 1.0f), 2f);
+            Main.Msg((OnGround ? "ДУГУЙН ТООРМОС " : "АГААРЫН ТООРМОС ") + (Airbrake ? "АСЛАА" : "УНТАРЛАА"), new Color(0.6f, 0.9f, 1.0f), 2f);
         }
         if (Input.IsActionJustPressed("flip") && !OnGround)
             _phiTarget += Mathf.Pi;
         if (Input.IsActionJustPressed("gear") && !OnGround)
         {
             GearDown = !GearDown;
-            Main.Msg("GEAR " + (GearDown ? "DOWN" : "UP"), new Color(0.6f, 0.9f, 1.0f), 2f);
+            Main.Msg("ДУГУЙ " + (GearDown ? "БУУЛГАЛАА" : "ХУРААЛАА"), new Color(0.6f, 0.9f, 1.0f), 2f);
         }
         if (Settings.StallProtection && !OnGround && !GearDown && Vel.Length() < 110f && Fuel > 0f)
             Throttle = Mathf.Max(Throttle, 1.25f);
@@ -469,14 +469,14 @@ public partial class Jet : Node3D, ITarget
             }
             OnGround = true;
             Main.Audio.Play("thump", -2f);
-            Main.Msg($"TOUCHDOWN  {sink:F1} m/s sink", new Color(0.6f, 0.9f, 1.0f), 3f);
+            Main.Msg($"ГАЗАРДЛАА  {sink:F1} м/с буултын хурд", new Color(0.6f, 0.9f, 1.0f), 3f);
         }
         Pos = new Vector2(Pos.X, gh + GearH);
         Agl = 0f;
         Vel = new Vector2(Vel.X, Mathf.Max(Vel.Y, 0f));
         if (!Main.Terrain.OnRunway(Pos.X) && Mathf.Abs(Vel.X) > 25f)
         {
-            Crash("RAN OFF THE RUNWAY");
+            Crash("ЗУРВАСААС ГАРЛАА");
             return;
         }
         // Same upper limit as the touchdown check, so a nose-high landing isn't
@@ -493,14 +493,14 @@ public partial class Jet : Node3D, ITarget
     string TouchdownFailure(bool runway, bool upright, float pitchRel)
     {
         if (!runway)
-            return GearDown && upright ? "LANDED OFF THE RUNWAY" : "CRASHED";
+            return GearDown && upright ? "ЗУРВАСААС ГАДУУР БУУЛАА" : "СҮЙРЛЭЭ";
         if (!GearDown)
-            return "GEAR-UP LANDING";
+            return "ДУГУЙГҮЙ БУУЛАА";
         if (!upright)
-            return "LANDED INVERTED";
+            return "УРВУУГААРАА БУУЛАА";
         if (pitchRel >= TailStrike)
-            return "TAIL STRIKE - NOSE TOO HIGH";
-        return "NOSE GEAR FIRST - NOSE TOO LOW";
+            return "СҮҮЛ ГАЗАР ШҮРГЭЛЭЭ - ХАМАР ХЭТ ӨНДӨР";
+        return "УРД ДУГУЙГААР ТҮРҮҮЛЖ БУУЛАА - ХАМАР ХЭТ НАМ";
     }
 
     void GroundService(float dt)
@@ -508,14 +508,14 @@ public partial class Jet : Node3D, ITarget
         if (OnGround && Vel.Length() < 3f && Main.Terrain.OnRunway(Pos.X))
         {
             if (RearmTimer == 0f)
-                Main.Msg("REARMING / REFUELING...", new Color(0.6f, 0.9f, 1.0f), 3f);
+                Main.Msg("ЗЭВСЭГЛЭЖ, ТҮЛШ ЦЭНЭГЛЭЖ БАЙНА...", new Color(0.6f, 0.9f, 1.0f), 3f);
             RearmTimer += dt;
             if (RearmTimer > 4f)
             {
                 RearmTimer = -999f;
                 Rearm();
                 ToRunwayStart();
-                Main.Msg("READY - RELEASE BRAKES (Z) AND TAKE OFF", new Color(0.6f, 1.0f, 0.6f), 4f);
+                Main.Msg("БЭЛЭН - ТООРМОСОО СУЛЛААД (Z) ХӨӨР", new Color(0.6f, 1.0f, 0.6f), 4f);
             }
         }
         else if (!OnGround)
@@ -552,6 +552,33 @@ public partial class Jet : Node3D, ITarget
         GLoad = 1f;
     }
 
+    /// Title-screen fly-by: cruises over the terrain in full afterburner,
+    /// rocking its wings gently. No physics, input or weapons.
+    public void StartFlyby()
+    {
+        float x = 400f;
+        Pos = new Vector2(x, Main.Terrain.Height(x + 600f) + 260f);
+        Throttle = EngineSpool = 1.25f;
+        GearDown = false;
+        Airbrake = false;
+        OnGround = false;
+    }
+
+    public void Flyby(float dt, float time)
+    {
+        const float speed = 170f;
+        // Follow the terrain a little ahead, so it climbs before the hills.
+        float want = Main.Terrain.Height(Pos.X + 600f) + 260f;
+        float vy = Mathf.Clamp((want - Pos.Y) * 0.4f, -25f, 25f);
+        Vel = new Vector2(speed, vy);
+        Pos += Vel * dt;
+        if (Pos.X > 9000f)
+            StartFlyby();
+        Theta = Mathf.Atan2(vy, speed) + 0.05f + 0.02f * Mathf.Sin(time * 0.7f);
+        _phi = _phiTarget = 0.12f * Mathf.Sin(time * 0.9f);
+        UpdateVisual();
+    }
+
     public void TakeDamage(float d)
     {
         if (!Alive)
@@ -563,7 +590,7 @@ public partial class Jet : Node3D, ITarget
         if (Hp <= 0f)
         {
             Hp = 0f;
-            Crash("SHOT DOWN");
+            Crash("БУУДУУЛЖ УНАЛАА");
         }
     }
 
@@ -586,12 +613,22 @@ public partial class Jet : Node3D, ITarget
     void SpeedCues()
     {
         float v = Vel.Length();
-        float st = Mathf.SmoothStep(0.55f, 0.95f, Mach);
+        // Fade in from Mach 0.3 (about 370 km/h), full strength from Mach 0.75.
+        float st = Mathf.SmoothStep(0.3f, 0.75f, Mach);
         _streaks.Emitting = st > 0.01f;
         _streaks.Color = new Color(1, 1, 1, st);
         // Billboard angles turn the other way to the jet's pitch.
         _streaks.AngleMin = _streaks.AngleMax = -Mathf.RadToDeg(Vel.Angle());
-        _streaks.Position = new Vector3(Pos.X + Vel.X * 0.35f, Pos.Y + Vel.Y * 0.35f, 25f);
+        // Fill the camera's view: a box between the camera and the jet, a bit
+        // ahead so the jet flies into the streaks. The camera pulls back as the
+        // jet climbs (hundreds of metres), so the box and the streak length
+        // scale with that distance to look the same on screen at any height.
+        float cd = Main.CamDist;
+        _streaks.EmissionBoxExtents = new Vector3(cd * 0.9f, cd * 0.5f, cd * 0.3f);
+        _streakQuad.Size = new Vector2(cd * 0.14f, cd * 0.003f);
+        _streaks.ScaleAmountMin = 0.6f;
+        _streaks.ScaleAmountMax = 1.4f;
+        _streaks.Position = new Vector3(Pos.X + Vel.X * 0.35f, Pos.Y + Vel.Y * 0.35f, cd * 0.4f);
 
         float low = OnGround ? 0f : 1f - Mathf.SmoothStep(8f, 35f, Agl);
         float sp = low * Mathf.SmoothStep(120f, 300f, v);
@@ -633,7 +670,7 @@ public partial class Jet : Node3D, ITarget
         Main.Shake = Mathf.Max(Main.Shake, 0.5f);
         var puff = Main.MakeParticles(Main.SmokeQuad, 80, 3f, new Vector2(15, 35), new Vector2(5, 11), _boomRamp, Vector3.Zero, 1.5f);
         Main.FireOnce(puff, p, 4f);
-        Main.Msg("MACH 1", new Color(0.6f, 0.9f, 1.0f), 2f);
+        Main.Msg("МАХ 1", new Color(0.6f, 0.9f, 1.0f), 2f);
     }
 
     // ---------------------------------------------------------------- weapons
@@ -667,19 +704,19 @@ public partial class Jet : Node3D, ITarget
             var tgt = Lasing ? LockTarget : null;
             Main.SpawnBomb(Pos + d * 1.2f, Vel + d * 2.5f, tgt);
             if (tgt != null)
-                Main.Msg("LGB AWAY - KEEP LASING", new Color(0.6f, 1.0f, 0.6f), 2f);
+                Main.Msg("БОМБ ХАЯГДЛАА - ЛАЗЕРЭЭ БАЙ ДЭЭР БАРЬ", new Color(0.6f, 1.0f, 0.6f), 2f);
         }
         UpdateLock(dt);
         if (Input.IsActionJustPressed("fire_missile") && !OnGround)
         {
             if (Mavs <= 0)
-                Main.Msg("NO MAVERICKS", new Color(1, 0.75f, 0.2f), 1.5f);
+                Main.Msg("MAVERICK ДУУССАН", new Color(1, 0.75f, 0.2f), 1.5f);
             else if (LockTarget == null || LockTime < 0.8f)
-                Main.Msg("NO LOCK", new Color(1, 0.75f, 0.2f), 1.5f);
+                Main.Msg("БАЙ БАРИАГҮЙ", new Color(1, 0.75f, 0.2f), 1.5f);
             else if (!LockTarget.Alive)
-                Main.Msg("TARGET DESTROYED - DESIGNATE A NEW ONE", new Color(1, 0.75f, 0.2f), 1.5f);
+                Main.Msg("БАЙ УСТСАН - ШИНЭ БАЙ СОНГО", new Color(1, 0.75f, 0.2f), 1.5f);
             else if (!InSeeker(LockTarget, 0.55f))
-                Main.Msg("OFF BORESIGHT - POINT THE NOSE AT IT", new Color(1, 0.75f, 0.2f), 1.5f);
+                Main.Msg("БАЙ ХАРАГДАХГҮЙ - ХАМРАА БАЙ РУУ ЧИГЛҮҮЛ", new Color(1, 0.75f, 0.2f), 1.5f);
             else if (_mavCd <= 0f)
             {
                 _mavCd = 0.6f;
@@ -687,7 +724,7 @@ public partial class Jet : Node3D, ITarget
                 _mavVis[Mavs].Visible = false;
                 var d = BodyDown();
                 Main.SpawnMaverick(Pos + d * 1.5f, Vel + d * 3f, LockTarget);
-                Main.Msg("RIFLE", new Color(0.6f, 1.0f, 0.6f), 1.5f);
+                Main.Msg("ПУУЖИН ХӨӨРЛӨӨ", new Color(0.6f, 1.0f, 0.6f), 1.5f);
             }
         }
         if (Input.IsActionJustPressed("flares") && Flares > 0 && _flareCd <= 0f)

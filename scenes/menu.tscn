@@ -97,12 +97,12 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0, 0, 0, 0.45)
+color = Color(0, 0, 0, 0.25)
 
 [node name="Center" type="CenterContainer" parent="."]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
+anchors_preset = 9
+anchor_right = 0.5
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -130,16 +130,16 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 1, 0.45, 1)
 theme_override_font_sizes/font_size = 30
-text = "CLOSE AIR SUPPORT"
+text = "ОЙРЫН АГААРЫН ДЭМЖЛЭГ"
 horizontal_alignment = 1
 
 [node name="Briefing" type="Label" parent="Center/Panel/Columns/Main"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 17
-text = "Enemy tanks, trucks and anti-air are rolling in from the RIGHT.
-Protect the friendly tanks at the GREEN SMOKE.
-Survive as many waves as you can."
+text = "Дайсны танк, ачааны машин, зенит БАРУУН талаас давшиж байна.
+НОГООН УТААНЫ дэргэдэх манай танкуудыг хамгаал.
+Нэмэлт хүч ирэх хүртэл довтолгоонуудыг няцаа."
 horizontal_alignment = 1
 
 [node name="Spacer" type="Control" parent="Center/Panel/Columns/Main"]
@@ -150,7 +150,7 @@ layout_mode = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.75, 0.2, 1)
 theme_override_font_sizes/font_size = 18
-text = "CHOOSE DIFFICULTY"
+text = "ТҮВШНЭЭ СОНГО"
 horizontal_alignment = 1
 
 [node name="Easy" type="Button" parent="Center/Panel/Columns/Main"]
@@ -158,14 +158,14 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "EASY"
+text = "ХЯЛБАР"
 
 [node name="EasyInfo" type="Label" parent="Center/Panel/Columns/Main"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 1, 0.45, 0.6)
 theme_override_font_sizes/font_size = 13
-text = "Start in the air, can't stall, auto pull-up near the ground,
-unlimited fuel, free rearm after each wave, fewer SAMs."
+text = "Агаарт эхэлнэ, даац алдахгүй, газарт ойртоход автоматаар өгснө,
+түлш дуусахгүй, довтолгоо бүрийн дараа үнэгүй цэнэглэнэ, ЗУП цөөн."
 horizontal_alignment = 1
 
 [node name="Normal" type="Button" parent="Center/Panel/Columns/Main"]
@@ -173,14 +173,14 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "NORMAL"
+text = "ДУНД"
 
 [node name="NormalInfo" type="Label" parent="Center/Panel/Columns/Main"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 1, 0.45, 0.6)
 theme_override_font_sizes/font_size = 13
-text = "Start in the air, can't stall, takes less damage.
-Land on the runway to rearm."
+text = "Агаарт эхэлнэ, даац алдахгүй, бага гэмтэл авна.
+Зэвсэглэхийн тулд зурвас дээр буух хэрэгтэй."
 horizontal_alignment = 1
 
 [node name="Realistic" type="Button" parent="Center/Panel/Columns/Main"]
@@ -188,14 +188,14 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "REALISTIC"
+text = "БОДИТ"
 
 [node name="RealisticInfo" type="Label" parent="Center/Panel/Columns/Main"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 1, 0.45, 0.6)
 theme_override_font_sizes/font_size = 13
-text = "Full flight model: take off from the runway,
-manage stall, fuel and landing yourself."
+text = "Бүрэн нислэгийн загвар: зурвасаас хөөрч,
+даац, түлш, газардалтаа өөрөө зохицуулна."
 horizontal_alignment = 1
 
 [node name="Spacer2" type="Control" parent="Center/Panel/Columns/Main"]
@@ -212,7 +212,7 @@ custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 16
-text = "CONTROLS"
+text = "УДИРДЛАГА"
 
 [node name="Quit" type="Button" parent="Center/Panel/Columns/Main/Row"]
 unique_name_in_owner = true
@@ -220,7 +220,7 @@ custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 16
-text = "QUIT"
+text = "ГАРАХ"
 
 [node name="Controls" type="Label" parent="Center/Panel/Columns"]
 unique_name_in_owner = true
@@ -228,26 +228,26 @@ visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 1, 0.45, 1)
 theme_override_font_sizes/font_size = 16
-text = "CONTROLS
+text = "УДИРДЛАГА
 
-W / S        pull up / push down
-F            flip (turn around)
-E / Q        throttle up / down
-SPACE        cannon
-B            drop bomb
-M            fire Maverick missile
-T            next target
-X            flares (dodge SAMs!)
-G            landing gear
-Z            speedbrake / wheel brakes
-V            targeting camera
+W / S        өгсөх / буух
+F            эргэж буцах
+E / Q        түлхэлт нэмэх / хасах
+SPACE        их буу
+B            бомб хаях
+M            Maverick пуужин харвах
+T            дараагийн бай
+X            хуурамч бай (ЗУП-ээс зайлсхийх!)
+G            буух дугуй
+Z            агаарын / дугуйн тоормос
+V            онилох камер
 
-P / ESC      pause
-R            restart
-H            show / hide help
+P / ESC      түр зогсоох
+R            дахин эхлэх
+H            тусламж харуулах / нуух
 
-TIP: when a missile warning sounds,
-press X for flares and turn hard."
+ЗӨВЛӨГӨӨ: пуужингийн дохио дуугарвал
+X дарж хуурамч бай хаяад огцом эргэ."
 
 [node name="Music" type="AudioStreamPlayer" parent="."]
 unique_name_in_owner = true

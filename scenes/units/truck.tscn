@@ -6,7 +6,7 @@
 [node name="Truck" type="Node3D"]
 script = ExtResource("1_unit")
 Kind = 1
-DisplayName = "TRUCK"
+DisplayName = "АЧААНЫ МАШИН"
 Team = 1
 Hp = 35.0
 Radius = 4.0

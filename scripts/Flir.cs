@@ -153,9 +153,9 @@ void fragment() {
         }
         var warn = new Color(1, 0.75f, 0.2f);
         if (pick == null)
-            Main.Msg("NO TARGET UNDER CROSSHAIR", warn, 1.5f);
+            Main.Msg("ЗАГАЛМАЙН ДОР БАЙ АЛГА", warn, 1.5f);
         else if (!Main.Jet.Designate(pick))
-            Main.Msg("POD CAN'T SEE " + pick.DisplayName + " FROM HERE", warn, 1.5f);
+            Main.Msg("КАМЕР ЭНДЭЭС " + pick.DisplayName + "-Г ХАРАХГҮЙ БАЙНА", warn, 1.5f);
     }
 
     /// Moves the crosshair along the lane. Right/left matches the main view

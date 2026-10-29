@@ -74,12 +74,12 @@ public partial class Game : Node3D
 
     void StartMission()
     {
-        Msg($"TASKING: CLOSE AIR SUPPORT  ({Settings.Difficulty.ToString().ToUpper()})", new Color(0.6f, 1.0f, 0.6f), 6f);
-        Msg("Protect the friendly tanks at the green smoke. Enemies come from the right.", Colors.White, 7f);
+        Msg($"ДААЛГАВАР: ОЙРЫН АГААРЫН ДЭМЖЛЭГ  ({Settings.DifficultyName})", new Color(0.6f, 1.0f, 0.6f), 6f);
+        Msg("Ногоон утааны дэргэдэх манай танкуудыг хамгаал. Дайсан баруун талаас ирж байна.", Colors.White, 7f);
         if (Jet.OnGround)
-            Msg("RELEASE BRAKES (Z), FULL THROTTLE AND TAKE OFF", new Color(0.6f, 1.0f, 0.6f), 7f);
+            Msg("ТООРМОСОО СУЛЛА (Z), ТҮЛХЭЛТЭЭ БҮРЭН НЭМЭЭД (E) ХӨӨР", new Color(0.6f, 1.0f, 0.6f), 7f);
         else
-            Msg("Hold W to climb, S to dive, SPACE to shoot. F flips you around.", new Color(0.6f, 1.0f, 0.6f), 9f);
+            Msg("W - өгсөх, S - буух, SPACE - буудах. F дарвал эргэж буцна.", new Color(0.6f, 1.0f, 0.6f), 9f);
         UpdateCamera(1f);
     }
 
@@ -94,6 +94,8 @@ public partial class Game : Node3D
             Settings.ShowBriefing = true;
             GetTree().ReloadCurrentScene();
         };
+        _flyby = true;
+        Jet.StartFlyby();
         OpenOverlay(menu);
     }
 
@@ -103,11 +105,11 @@ public partial class Game : Node3D
         _menuX0 = FriendlyLine - 500f;
         var briefing = new Cutscene
         {
-            Header = "MISSION BRIEFING",
-            Title = "OPERATION IRON SHIELD",
-            Info = $"CALLSIGN: VIPER 1        DIFFICULTY: {Settings.Difficulty.ToString().ToUpper()}",
+            Header = "ДААЛГАВРЫН ТАНИЛЦУУЛГА",
+            Title = "\"ТӨМӨР БАМБАЙ\" АЖИЛЛАГАА",
+            Info = $"ДУУДЛАГЫН НЭР: ВАЙПЕР 1        ТҮВШИН: {Settings.DifficultyName}",
             Body = BriefingText(),
-            ContinueText = "START MISSION",
+            ContinueText = "ДААЛГАВАР ЭХЛҮҮЛЭХ",
             OnDone = () =>
             {
                 InMenu = false;
@@ -130,17 +132,18 @@ public partial class Game : Node3D
     static string BriefingText()
     {
         string start = Settings.StartInAir
-            ? "You are already airborne over the airfield. Fly RIGHT to reach the front."
-            : "Your jet is on the runway. Release the brakes (Z), go to full throttle (E) and take off.";
+            ? "Та нисэх буудлын дээгүүр аль хэдийн нисч байна. Фронт руу хүрэхийн тулд БАРУУН тийш нис."
+            : "Таны онгоц хөөрөх зурвас дээр байна. Тоормосоо сулла (Z), түлхэлтээ бүрэн нэм (E), тэгээд хөөр.";
         return
-            "0600 HOURS. Enemy armor has broken through the river valley in the east.\n\n" +
-            "The last friendly tank platoon is dug in at the GREEN SMOKE. They will not hold " +
-            "on their own. You are Viper 1, the only aircraft in range.\n\n" +
-            "Destroy the enemy columns before they reach our tanks. Reinforcements are " +
-            $"{MissionWaves} waves out: hold the line until they arrive. Expect anti-aircraft guns " +
-            "and SAM launchers: when the missile warning sounds, drop FLARES (X) and turn hard.\n\n" +
+            "06:00 ЦАГ. Дайсны хуягт хүчин зүүн талын голын хөндийг нэвтэрлээ.\n\n" +
+            "Манай сүүлчийн танкийн взвод НОГООН УТААНЫ дэргэд бэхлэлт хийж байна. Тэд ганцаараа " +
+            "тэсэхгүй. Та бол Вайпер 1 - ойр орчимд байгаа цорын ганц онгоц.\n\n" +
+            "Дайсны цувааг манай танкуудад хүрэхээс өмнө устга. Нэмэлт хүч " +
+            $"{MissionWaves} довтолгооны дараа ирнэ: тэд ирэх хүртэл шугамаа барь. Зенитийн буу болон " +
+            "ЗУП (зенитийн удирдлагат пуужин) таныг хүлээж байна: пуужингийн дохио дуугарвал " +
+            "ХУУРАМЧ БАЙ (X) хаяж, огцом эргэ.\n\n" +
             start + "\n\n" +
-            "Good hunting, Viper 1.";
+            "Амжилт хүсье, Вайпер 1.";
     }
 
     /// Victory or overrun: an ending cutscene, then the debrief.
@@ -152,24 +155,24 @@ public partial class Game : Node3D
         _menuX0 = FriendlyLine - 500f;
         _menuTime = 0f;
         string body = won
-            ? "Viper One, this is Ground. The reinforcement column has reached the valley. " +
-              "Enemy armor is pulling back across the river.\n\n" +
+            ? "Вайпер 1, энэ бол Газрын хяналт. Нэмэлт хүчний цуваа хөндийд хүрлээ. " +
+              "Дайсны хуягт хүчин голын нөгөө эрэг рүү ухарч байна.\n\n" +
               (saved == FriendlyStart
-                  ? "Every tank in the platoon made it. Not a single crew lost."
-                  : $"{saved} of {FriendlyStart} tanks in the platoon made it.") + "\n\n" +
-              "The line held because of you. RTB. Drinks are on us."
-            : "The last friendly tank has gone silent. Enemy armor is pouring through the gap " +
-              "toward the airfield.\n\n" +
-              "\"Viper 1, this is Command. We've lost the valley. Break off and return to base. " +
-              "We'll be back.\"";
+                  ? "Взводын бүх танк амьд үлдлээ. Нэг ч багийн гишүүн эндсэнгүй."
+                  : $"Взводын {FriendlyStart} танкаас {saved} нь амьд үлдлээ.") + "\n\n" +
+              "Шугам таны ачаар тэслээ. Бааздаа буц. Өнөө орой бидний даалгавар."
+            : "Манай сүүлчийн танк чимээгүй боллоо. Дайсны хуягт хүчин нээгдсэн цоорхойгоор " +
+              "нисэх буудал руу давшиж байна.\n\n" +
+              "\"Вайпер 1, энэ бол Командлал. Бид хөндийг алдлаа. Тулалдаанаас гарч бааздаа буц. " +
+              "Бид эргэж ирнэ.\"";
         var ending = new Cutscene
         {
-            Header = won ? "MISSION COMPLETE" : "MISSION FAILED",
-            Title = won ? "THE LINE HELD" : "POSITION OVERRUN",
+            Header = won ? "ДААЛГАВАР БИЕЛЛЭЭ" : "ДААЛГАВАР БҮТЭЛГҮЙТЛЭЭ",
+            Title = won ? "ШУГАМ ТЭСЛЭЭ" : "БАЙРЛАЛ ЭЗЛЭГДЛЭЭ",
             TitleColor = won ? new Color(0.35f, 1.0f, 0.45f) : new Color(1.0f, 0.3f, 0.2f),
-            Info = "OPERATION IRON SHIELD",
+            Info = "\"ТӨМӨР БАМБАЙ\" АЖИЛЛАГАА",
             Body = body,
-            ContinueText = "DEBRIEF",
+            ContinueText = "ДҮГНЭЛТ",
             OnDone = () =>
             {
                 _menuLayer.QueueFree();
@@ -212,10 +215,28 @@ public partial class Game : Node3D
     void UpdateMenuCamera(float dt)
     {
         _menuTime += dt;
+        if (_flyby)
+        {
+            UpdateFlybyCamera(dt);
+            return;
+        }
         float x = _menuX0 + _menuTime * 25f;
         float gh = Terrain.Height(x);
         Camera.Position = new Vector3(x, gh + 90f, 260f);
         Camera.LookAt(new Vector3(x + 120f, gh + 40f, 0f), Vector3.Up);
+    }
+
+    /// Close behind the afterburners. The camera sits a little to the jet's
+    /// left and looks straight ahead, so the jet fills the right half of the
+    /// screen, clear of the menu on the left.
+    void UpdateFlybyCamera(float dt)
+    {
+        Jet.Flyby(dt, _menuTime);
+        var p = new Vector3(Jet.Pos.X, Jet.Pos.Y, 0f);
+        var sway = new Vector3(0f, Mathf.Sin(_menuTime * 1.3f) * 0.6f, Mathf.Sin(_menuTime * 0.8f) * 1.2f);
+        var shake = new Vector3(Fx.Rand(-1, 1), Fx.Rand(-1, 1), 0) * 0.06f;
+        Camera.Position = p + new Vector3(-24f, 3.5f, -10f) + sway + shake;
+        Camera.LookAt(Camera.Position + new Vector3(100f, -4f, 0f), Vector3.Up);
     }
 
     void BackToMenu()
@@ -365,7 +386,7 @@ public partial class Game : Node3D
             };
             x += Fx.Rand(70f, 160f);
         }
-        Msg($"WAVE {Wave}: {comp[UnitKind.Tank]} TANKS, {comp[UnitKind.Truck]} TRUCKS, {comp[UnitKind.Aaa]} AAA, {comp[UnitKind.Sam]} SAM",
+        Msg($"ДОВТОЛГОО {Wave}: {comp[UnitKind.Tank]} ТАНК, {comp[UnitKind.Truck]} АЧААНЫ МАШИН, {comp[UnitKind.Aaa]} ЗЕНИТ, {comp[UnitKind.Sam]} ЗУП",
                 new Color(1, 0.75f, 0.3f), 6f);
     }
 
@@ -459,7 +480,7 @@ public partial class Game : Node3D
         AddChild(m);
         m.Init(this, p, v, target, z);
         Missiles.Add(m);
-        Msg("SAM LAUNCH!", new Color(1, 0.3f, 0.2f), 3f);
+        Msg("ЗУП ХӨӨРЛӨӨ!", new Color(1, 0.3f, 0.2f), 3f);
         var p3 = new Vector3(p.X, p.Y, z);
         Audio.PlayAt("launch", p3, 2f, 1f, Audio.SoundDelay(p3));
         MuzzleFlash(p3, 1.6f);
@@ -499,7 +520,7 @@ public partial class Game : Node3D
         {
             s.Target = null;
             if (t != null && IsInstanceValid(t) && t.Alive)
-                Msg("LASER LOST - BOMB BALLISTIC", new Color(1, 0.75f, 0.2f), 2f);
+                Msg("ЛАЗЕР ТАСАРЛАА - БОМБ ЧӨЛӨӨТ УНАЛТТАЙ", new Color(1, 0.75f, 0.2f), 2f);
             return;
         }
         if (s.Age < 0.6f)   // clear of the jet before the fins move
@@ -618,7 +639,7 @@ public partial class Game : Node3D
                 else
                 {
                     u.TakeDamage(60f, true, s.Vel.Normalized());
-                    Msg("DUD - bomb not armed (release higher)", new Color(1, 0.75f, 0.2f), 2.5f);
+                    Msg("ДЭЛБЭРСЭНГҮЙ - бомб идэвхжээгүй (илүү өндрөөс хая)", new Color(1, 0.75f, 0.2f), 2.5f);
                 }
                 break;
         }
@@ -651,7 +672,7 @@ public partial class Game : Node3D
                 {
                     var d = MakeParticles(SmokeQuad, 20, 2f, new Vector2(4, 12), new Vector2(3, 6), _dustRamp, new Vector3(0, -4, 0), 1f);
                     FireOnce(d, new Vector3(p.X, p.Y, 0), 3f);
-                    Msg("DUD - bomb not armed (release higher)", new Color(1, 0.75f, 0.2f), 2.5f);
+                    Msg("ДЭЛБЭРСЭНГҮЙ - бомб идэвхжээгүй (илүү өндрөөс хая)", new Color(1, 0.75f, 0.2f), 2.5f);
                 }
                 break;
         }
@@ -930,19 +951,19 @@ public partial class Game : Node3D
             {
                 PlayerKills++;
                 Score += u.Value;
-                Msg($"SPLASH {u.DisplayName}  +{u.Value}", new Color(0.6f, 1.0f, 0.6f), 3f);
+                Msg($"УСТЛАА: {u.DisplayName}  +{u.Value}", new Color(0.6f, 1.0f, 0.6f), 3f);
             }
             else
-                Msg($"Friendly armor killed a {u.DisplayName}", new Color(0.8f, 0.9f, 0.8f), 3f);
+                Msg($"Манай танк {u.DisplayName}-г устгалаа", new Color(0.8f, 0.9f, 0.8f), 3f);
         }
         else if (byPlayer)
         {
             Score -= 400;
             FriendlyKills++;
-            Msg("FRIENDLY FIRE! CEASE FIRE!  -400", new Color(1, 0.25f, 0.2f), 4f);
+            Msg("ӨӨРСДИЙГӨӨ БУУДЛАА! ГАЛАА ЗОГСОО!  -400", new Color(1, 0.25f, 0.2f), 4f);
         }
         else
-            Msg($"Friendly {u.DisplayName} destroyed", new Color(1, 0.55f, 0.3f), 3f);
+            Msg($"Манай {u.DisplayName} устлаа", new Color(1, 0.55f, 0.3f), 3f);
     }
 
     /// Ends the game when the jet is lost. The jet just disappears.
@@ -961,7 +982,7 @@ public partial class Game : Node3D
             return;
         if (FriendlyStart > 0 && CountTeam(0) == 0)
         {
-            Msg("ALL FRIENDLY TANKS DESTROYED", new Color(1, 0.3f, 0.2f), 6f);
+            Msg("МАНАЙ БҮХ ТАНК УСТЛАА", new Color(1, 0.3f, 0.2f), 6f);
             EndMission(GameState.Overrun);
             return;
         }
@@ -979,16 +1000,16 @@ public partial class Game : Node3D
             Score += 300 * Wave;
             if (Wave >= MissionWaves)
             {
-                Msg($"WAVE {Wave} CLEARED  +{300 * Wave}  -  REINFORCEMENTS HAVE ARRIVED!", new Color(0.6f, 1.0f, 0.6f), 7f);
+                Msg($"ДОВТОЛГОО {Wave} НЯЦААГДЛАА  +{300 * Wave}  -  НЭМЭЛТ ХҮЧ ИРЛЭЭ!", new Color(0.6f, 1.0f, 0.6f), 7f);
                 EndMission(GameState.Victory);
             }
             else if (Settings.AirRearm)
             {
                 Jet.Rearm();
-                Msg($"WAVE {Wave} CLEARED  +{300 * Wave}  -  rearmed, refueled and repaired", new Color(0.6f, 1.0f, 0.6f), 7f);
+                Msg($"ДОВТОЛГОО {Wave} НЯЦААГДЛАА  +{300 * Wave}  -  зэвсэг, түлш нөхөгдөж, засварлагдлаа", new Color(0.6f, 1.0f, 0.6f), 7f);
             }
             else
-                Msg($"WAVE {Wave} CLEARED  +{300 * Wave}  -  land on the runway to rearm", new Color(0.6f, 1.0f, 0.6f), 7f);
+                Msg($"ДОВТОЛГОО {Wave} НЯЦААГДЛАА  +{300 * Wave}  -  зэвсэглэхийн тулд зурвас дээр буу", new Color(0.6f, 1.0f, 0.6f), 7f);
         }
     }
 

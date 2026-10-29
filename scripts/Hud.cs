@@ -91,8 +91,8 @@ public partial class Hud : Control
 			DrawHelp();
 		if (Main.Paused)
 		{
-			CTxt(new Vector2(Size.X * 0.5f, Size.Y * 0.42f), "PAUSED", 40, CHud);
-			CTxt(new Vector2(Size.X * 0.5f, Size.Y * 0.42f + 40f), "P resume    ENTER main menu", 20, CAmber);
+			CTxt(new Vector2(Size.X * 0.5f, Size.Y * 0.42f), "ТҮР ЗОГСООСОН", 40, CHud);
+			CTxt(new Vector2(Size.X * 0.5f, Size.Y * 0.42f + 40f), "P үргэлжлүүлэх    ENTER үндсэн цэс", 20, CAmber);
 		}
 		if (Main.State == GameState.Dead)
 			DrawEnd();
@@ -146,7 +146,7 @@ public partial class Hud : Control
 			DrawColoredPolygon(new[] { e + dir * sz, e - dir * sz * 0.6f + side * sz * 0.7f, e - dir * sz * 0.6f - side * sz * 0.7f },
 					new Color(col, 0.9f));
 			if (threat)
-				CTxt(e - dir * 22f + new Vector2(0, 5), u.Kind == UnitKind.Sam ? "SAM" : "AAA", 11, col);
+				CTxt(e - dir * 22f + new Vector2(0, 5), u.Kind == UnitKind.Sam ? "ЗУП" : "ЗЕНИТ", 11, col);
 			float dist = u.CPos.DistanceTo(j.Pos);
 			if (dist < nearestD)
 			{
@@ -156,7 +156,7 @@ public partial class Hud : Control
 			}
 		}
 		if (nearestD < float.PositiveInfinity)
-			CTxt(nearestE - nearestDir * 40f + new Vector2(0, 5), $"{nearestD / 1000f:F1} km", 14, CWarn);
+			CTxt(nearestE - nearestDir * 40f + new Vector2(0, 5), $"{nearestD / 1000f:F1} км", 14, CWarn);
 	}
 
 	void DrawWorldMarkers(Jet j)
@@ -210,7 +210,7 @@ public partial class Hud : Control
 				DrawArc(cp, 12f, 0, Mathf.Tau, 24, CHud, 2f);
 				DrawCircle(cp, 2f, CHud);
 				bool low = j.CcipTime < 1f;   // bomb wouldn't arm in time
-				Txt(cp + new Vector2(16, 5), $"{j.CcipTime:F1}s", 13, low ? CWarn : CHud);
+				Txt(cp + new Vector2(16, 5), $"{j.CcipTime:F1}с", 13, low ? CWarn : CHud);
 			}
 			// Gun impact cross.
 			if (j.GunCcip != null && W2S(j.GunCcip.Value) is Vector2 gp)
@@ -235,7 +235,7 @@ public partial class Hud : Control
 			{
 				var (e, dir) = EdgePoint(ps, 30f);
 				DrawPolyline(new[] { e - dir * 10f + dir.Orthogonal() * 6f, e, e - dir * 10f - dir.Orthogonal() * 6f }, pc, 2f);
-				CTxt(e - dir * 26f + new Vector2(0, 5), "POD", 11, pc);
+				CTxt(e - dir * 26f + new Vector2(0, 5), "КАМЕР", 11, pc);
 			}
 		}
 		// Maverick lock. Off-screen targets get the diamond pinned to the screen edge.
@@ -256,9 +256,9 @@ public partial class Hud : Control
 				DrawColoredPolygon(new[] { e + dir * (r + 14f), e + dir * r + dir.Orthogonal() * 6f, e + dir * r - dir.Orthogonal() * 6f }, c);
 			}
 			DrawPolyline(new[] { dp + new Vector2(0, -r), dp + new Vector2(r, 0), dp + new Vector2(0, r), dp + new Vector2(-r, 0), dp + new Vector2(0, -r) }, c, 2f);
-			string label = !lt.Alive ? "DESTROYED" : tracking ? "TRACK" : "ACQ";
+			string label = !lt.Alive ? "УСТСАН" : tracking ? "ДАГАЛТ" : "ХАЙЛТ";
 			if (!onScreen)
-				label += $" {lt.DisplayName} {lt.CPos.DistanceTo(j.Pos) / 1000f:F1} km";
+				label += $" {lt.DisplayName} {lt.CPos.DistanceTo(j.Pos) / 1000f:F1} км";
 			// Keep the label inside the screen when the diamond sits on the right edge.
 			bool left = dp.X > Size.X * 0.5f && !onScreen;
 			Txt(dp + new Vector2(left ? -r - 4 - 150 : r + 4, -r), label, 12, c, left ? HorizontalAlignment.Right : HorizontalAlignment.Left, left ? 150f : -1f);
@@ -288,51 +288,50 @@ public partial class Hud : Control
 	{
 		const float x = 24f;
 		float y = 40f;
-		float kts = j.Vel.Length() * 1.94384f;
+		float kmh = j.Vel.Length() * 3.6f;
 		var lines = new (string label, string value)[]
 		{
-			("SPD", $"{(int)kts,4} KT"),
-			("MACH", $"{j.Mach:F2}"),
-			("ALT", $"{(int)(j.Pos.Y * 3.28084f),5} FT"),
-			("RALT", $"{(int)(Mathf.Max(j.Agl, 0f) * 3.28084f),5} FT"),
+			("ХУРД", $"{(int)kmh,4} км/ц"),
+			("МАХ", $"{j.Mach:F2}"),
+			("ӨНДӨР", $"{(int)j.Pos.Y,5} м"),
+			("ГАЗАР", $"{(int)Mathf.Max(j.Agl, 0f),5} м"),
 			("G", j.GLoad.ToString("+0.0;-0.0")),
-			("AOA", $"{Mathf.RadToDeg(j.Alpha * j.UpSign()),4:F1}"),
-			("VS", $"{((int)(j.Vel.Y * 196.85f)).ToString("+0;-0"),5} FPM"),
+			("ӨНЦӨГ", $"{Mathf.RadToDeg(j.Alpha * j.UpSign()),4:F1}°"),
+			("БОСОО", $"{((int)j.Vel.Y).ToString("+0;-0"),5} м/с"),
 		};
 		foreach (var (label, value) in lines)
 		{
 			Txt(new Vector2(x, y), label, 14, CDim);
-			Txt(new Vector2(x + 52, y), value, 18, CHud);
+			Txt(new Vector2(x + 62, y), value, 18, CHud);
 			y += 24f;
 		}
 		y += 8f;
 		float thr = j.EngineSpool;
 		bool ab = thr > 1f;
-		Txt(new Vector2(x, y), "THR", 14, CDim);
-		Txt(new Vector2(x + 52, y), ab ? $"AB {(int)((thr - 1f) / 0.25f * 100f + 0.5f)}" : $"{(int)(thr * 100f),3}%", 18, ab ? CAmber : CHud);
+		Txt(new Vector2(x, y), "ТҮЛХ", 14, CDim);
+		Txt(new Vector2(x + 62, y), ab ? $"НШ {(int)((thr - 1f) / 0.25f * 100f + 0.5f)}" : $"{(int)(thr * 100f),3}%", 18, ab ? CAmber : CHud);
 		DrawRect(new Rect2(x + 150, y - 12, 100, 10), CDim, false, 1f);
 		DrawRect(new Rect2(x + 150, y - 12, 100f * Mathf.Clamp(j.Throttle / 1.25f, 0f, 1f), 10), j.Throttle > 1f ? CAmber : CHud);
 		DrawLine(new Vector2(x + 150 + 80, y - 14), new Vector2(x + 150 + 80, y), CWarn, 1f);   // the AB detent
 		y += 24f;
-		float lbs = j.Fuel * 2.20462f;
-		Txt(new Vector2(x, y), "FUEL", 14, CDim);
-		Txt(new Vector2(x + 52, y), $"{(int)lbs,5} LB", 18, lbs < 2000f ? CWarn : CHud);
+		Txt(new Vector2(x, y), "ТҮЛШ", 14, CDim);
+		Txt(new Vector2(x + 62, y), $"{(int)j.Fuel,5} кг", 18, j.Fuel < 907f ? CWarn : CHud);
 		y += 24f;
-		Txt(new Vector2(x, y), "WT", 14, CDim);
-		Txt(new Vector2(x + 52, y), $"{(int)(j.Mass() * 2.20462f),5} LB", 18, CHud);
+		Txt(new Vector2(x, y), "ЖИН", 14, CDim);
+		Txt(new Vector2(x + 62, y), $"{(int)j.Mass(),5} кг", 18, CHud);
 		y += 24f;
-		Txt(new Vector2(x, y), "DMG", 14, CDim);
+		Txt(new Vector2(x, y), "БҮТЭН", 14, CDim);
 		var hc = j.Hp > 55f ? CHud : (j.Hp > 30f ? CAmber : CWarn);
-		DrawRect(new Rect2(x + 52, y - 13, 150, 12), new Color(0, 0, 0, 0.4f));
-		DrawRect(new Rect2(x + 52, y - 13, 1.5f * j.Hp, 12), hc);
+		DrawRect(new Rect2(x + 62, y - 13, 150, 12), new Color(0, 0, 0, 0.4f));
+		DrawRect(new Rect2(x + 62, y - 13, 1.5f * j.Hp, 12), hc);
 		y += 24f;
 		var status = new List<string>();
 		if (j.GearDown)
-			status.Add("GEAR");
+			status.Add("ДУГУЙ");
 		if (j.Airbrake)
-			status.Add(j.OnGround ? "BRAKE" : "SPDBRK");
+			status.Add(j.OnGround ? "ТООРМОС" : "АГ.ТООРМОС");
 		if (j.UpSign() < 0f)
-			status.Add("INVERTED");
+			status.Add("УРВУУ");
 		if (status.Count > 0)
 			Txt(new Vector2(x, y), string.Join(" ", status), 14, CAmber);
 	}
@@ -341,20 +340,20 @@ public partial class Hud : Control
 	{
 		const float x = 24f;
 		float y = Size.Y - 120f;
-		DrawRect(new Rect2(x - 10, y - 24, 230, 112), new Color(0, 0, 0, 0.3f));
+		DrawRect(new Rect2(x - 10, y - 24, 270, 112), new Color(0, 0, 0, 0.3f));
 		var rows = new (string name, int count, string key)[]
 		{
-			("GUN  M61A2", j.Ammo, "SPACE"),
+			("БУУ  M61A2", j.Ammo, "SPACE"),
 			("GBU-12", j.Bombs, "B"),
 			("AGM-65", j.Mavs, "M"),
-			("FLARE", j.Flares, "X"),
+			("ХУУРАМЧ БАЙ", j.Flares, "X"),
 		};
 		foreach (var (name, count, key) in rows)
 		{
 			bool empty = count == 0;
 			Txt(new Vector2(x, y), name, 15, empty ? CDim : CHud);
-			Txt(new Vector2(x + 115, y), count.ToString(), 17, empty ? CWarn : CHud);
-			Txt(new Vector2(x + 165, y), key, 12, CDim);
+			Txt(new Vector2(x + 140, y), count.ToString(), 17, empty ? CWarn : CHud);
+			Txt(new Vector2(x + 195, y), key, 12, CDim);
 			y += 24f;
 		}
 		// Maverick target readout above the panel.
@@ -362,12 +361,12 @@ public partial class Hud : Control
 		if (lt != null && IsInstanceValid(lt))
 		{
 			bool tracking = j.LockTime > 0.8f;
-			string state = !lt.Alive ? "DESTROYED" : tracking ? "TRACK" : "ACQ";
-			Txt(new Vector2(x - 10, Size.Y - 152f), $"TGT  {lt.DisplayName}  {lt.CPos.DistanceTo(j.Pos) / 1000f:F1} km  {state}",
+			string state = !lt.Alive ? "УСТСАН" : tracking ? "ДАГАЛТ" : "ХАЙЛТ";
+			Txt(new Vector2(x - 10, Size.Y - 152f), $"БАЙ  {lt.DisplayName}  {lt.CPos.DistanceTo(j.Pos) / 1000f:F1} км  {state}",
 					14, !lt.Alive ? CDim : tracking ? CHud : CAmber);
 		}
 		else if (j.Mavs > 0 || j.Bombs > 0)
-			Txt(new Vector2(x - 10, Size.Y - 152f), "TGT  NONE", 14, CDim);
+			Txt(new Vector2(x - 10, Size.Y - 152f), "БАЙ  АЛГА", 14, CDim);
 	}
 
 	/// Frame, crosshair and readouts over the targeting pod picture.
@@ -382,21 +381,21 @@ public partial class Hud : Control
 		const float gap = 8f, len = 22f;
 		foreach (var d in new[] { Vector2.Left, Vector2.Right, Vector2.Up, Vector2.Down })
 			DrawLine(c + d * gap, c + d * len, CHud, 1.5f);
-		Txt(r.Position + new Vector2(6, 16), "FLIR  WHOT", 12, CHud);
-		Txt(r.Position + new Vector2(r.Size.X - 60, 16), f.Manual ? "MAN" : "AUTO", 12, CHud);
+		Txt(r.Position + new Vector2(6, 16), "ДУЛААНЫ КАМЕР", 12, CHud);
+		Txt(r.Position + new Vector2(r.Size.X - 60, 16), f.Manual ? "ГАРААР" : "АВТО", 12, CHud);
 		string info;
 		if (f.Slewing)
-			info = $"SLEW  {f.Range / 1000f:F1} km";
+			info = $"ЧИГЛҮҮЛЭХ  {f.Range / 1000f:F1} км";
 		else if (f.Target != null)
-			info = $"{f.Target.DisplayName}  {f.Range / 1000f:F1} km  {(!f.Target.Alive ? "DESTROYED" : j.LockTime > 0.8f ? "TRACK" : "ACQ")}";
+			info = $"{f.Target.DisplayName}  {f.Range / 1000f:F1} км  {(!f.Target.Alive ? "УСТСАН" : j.LockTime > 0.8f ? "ДАГАЛТ" : "ХАЙЛТ")}";
 		else
-			info = $"{(f.Manual ? "POINT" : "SCAN")}  {f.Range / 1000f:F1} km";
+			info = $"{(f.Manual ? "ЗААХ" : "ХАЙЛТ")}  {f.Range / 1000f:F1} км";
 		Txt(r.Position + new Vector2(6, r.Size.Y - 8), info, 12, CHud);
 		// Laser: steady while lasing, blinking with the time to impact while a bomb is guiding.
 		float tti = Main.LgbTimeToImpact();
 		if (j.Lasing)
 		{
-			string laser = tti >= 0f ? $"LASE  LGB {tti:F0}s" : "LASER RDY";
+			string laser = tti >= 0f ? $"ЛАЗЕР  БОМБ {tti:F0}с" : "ЛАЗЕР БЭЛЭН";
 			if (tti < 0f || (_blink % 0.6f) < 0.4f)
 				Txt(r.Position + new Vector2(r.Size.X - 6 - 120, r.Size.Y - 8), laser, 12, CHud, HorizontalAlignment.Right, 120f);
 		}
@@ -406,17 +405,17 @@ public partial class Hud : Control
 	{
 		float x = Size.X - 230f;
 		float y = 40f;
-		Txt(new Vector2(x, y), $"SCORE  {Main.Score}", 20, CHud);
+		Txt(new Vector2(x, y), $"ОНОО  {Main.Score}", 20, CHud);
 		y += 26f;
-		Txt(new Vector2(x, y), $"WAVE   {Main.Wave} / {Game.MissionWaves}", 16, CHud);
+		Txt(new Vector2(x, y), $"ДОВТОЛГОО  {Main.Wave} / {Game.MissionWaves}", 16, CHud);
 		y += 22f;
-		Txt(new Vector2(x, y), $"HOSTILE  {Main.CountTeam(1)}", 16, CWarn);
+		Txt(new Vector2(x, y), $"ДАЙСАН  {Main.CountTeam(1)}", 16, CWarn);
 		y += 22f;
-		Txt(new Vector2(x, y), $"KILLS  {Main.Kills}", 14, CDim);
+		Txt(new Vector2(x, y), $"УСТГАСАН  {Main.Kills}", 14, CDim);
 		if (!Main.WaveActive && Main.State == GameState.Play)
 		{
 			y += 22f;
-			Txt(new Vector2(x, y), $"NEXT WAVE {(int)Mathf.Ceil(Main.WaveTimer)} s", 14, CAmber);
+			Txt(new Vector2(x, y), $"ДАРААГИЙН ДОВТОЛГОО {(int)Mathf.Ceil(Main.WaveTimer)} с", 14, CAmber);
 		}
 	}
 
@@ -449,7 +448,7 @@ public partial class Hud : Control
 			var f = j.Fwd() * new Vector2(1, -1);   // screen y points down
 			DrawColoredPolygon(new[] { jp + f * 7, jp + f.Orthogonal() * 4 - f * 3, jp - f.Orthogonal() * 4 - f * 3 }, Colors.White);
 		}
-		Txt(new Vector2(r.Position.X + 4, r.End.Y - 4), "BASE", 10, CFriend);
+		Txt(new Vector2(r.Position.X + 4, r.End.Y - 4), "БААЗ", 10, CFriend);
 	}
 
 	/// Square-root altitude scale so low flying is still readable on the map.
@@ -468,26 +467,26 @@ public partial class Hud : Control
 		var c = new Vector2(Size.X * 0.5f, Size.Y * 0.2f);
 		var w = new List<(string text, Color col)>();
 		if (Main.SamInbound())
-			w.Add(("MISSILE - FLARES / BREAK / GO LOW", CWarn));
+			w.Add(("ПУУЖИН! - ХУУРАМЧ БАЙ (X) / ОГЦОМ ЭРГЭ / НАМ ЯВ", CWarn));
 		else if (j.RwrLock > 0f)
-			w.Add(("SAM RADAR LOCK", CAmber));
+			w.Add(("ЗУП-ИЙН РАДАР ТАНЫГ БАРЬЛАА", CAmber));
 		if (Main.PullUpWarning())
-			w.Add(("PULL UP", CWarn));
+			w.Add(("ДЭЭШЭЭ ТАТ!", CWarn));
 		if (!j.OnGround && j.Stalled)
-			w.Add(("STALL", CWarn));
+			w.Add(("ДААЦ АЛДАГДЛАА", CWarn));
 		if (!j.OnGround && j.GLoad > 12f)
-			w.Add(("OVER-G", CAmber));
+			w.Add(("ХЭТ АЧААЛАЛ", CAmber));
 		if (j.Fuel < 900f)
-			w.Add(("BINGO FUEL - RTB", CAmber));
+			w.Add(("ТҮЛШ ДУУСАЖ БАЙНА - БААЗДАА БУЦ", CAmber));
 		if (j.Hp < 30f)
-			w.Add(("ENGINE DAMAGE", CWarn));
+			w.Add(("ХӨДӨЛГҮҮР ГЭМТСЭН", CWarn));
 		if (j.Pos.X > 14000f || j.Pos.X < -3500f)
-			w.Add(("LEAVING AREA - TURN BACK", CAmber));
+			w.Add(("БҮСЭЭС ГАРЧ БАЙНА - БУЦ", CAmber));
 		for (int i = 0; i < w.Count; i++)
 			if (on || w[i].col != CWarn)   // red warnings blink
 				CTxt(c + new Vector2(0, i * 30f), w[i].text, 24, w[i].col);
 		if (j.OnGround && j.RearmTimer > 0f)
-			CTxt(new Vector2(Size.X * 0.5f, Size.Y * 0.32f), $"REARMING  {(int)(Mathf.Min(j.RearmTimer / 4f, 1f) * 100f)}%", 20, CFriend);
+			CTxt(new Vector2(Size.X * 0.5f, Size.Y * 0.32f), $"ЦЭНЭГЛЭЖ БАЙНА  {(int)(Mathf.Min(j.RearmTimer / 4f, 1f) * 100f)}%", 20, CFriend);
 	}
 
 	void DrawMessages()
@@ -506,20 +505,20 @@ public partial class Hud : Control
 	{
 		string[] lines =
 		{
-			"W / S   pull / push  (relative to canopy)",
-			"F       half-roll (flip canopy side)",
-			"E / Q   throttle up / down  (past 80% bar = AB)",
-			"SPACE   M61 cannon",
-			"B       drop GBU-12  (guides to a tracked target, else use the pipper)",
-			"M       AGM-65 Maverick  (T cycles target / pod auto)",
-			"X       flares",
-			"Z       speedbrake / wheel brakes (toggle)",
-			"V       targeting pod (FLIR) on / off",
-			"RMB     hold + drag: slew pod, wheel zooms, release designates",
-			"G       landing gear  (land on runway to rearm)",
-			"Wheel / +/-  zoom    P pause   R restart   H help",
+			"W / S   татах / түлхэх  (бүхээгтэй харьцангуй)",
+			"F       хагас эргэлт (бүхээгийн талыг солих)",
+			"E / Q   түлхэлт нэмэх / хасах  (80%-иас дээш = нэмэлт шаталт)",
+			"SPACE   M61 их буу",
+			"B       GBU-12 бомб хаях  (дагаж буй бай руу чиглэнэ, үгүй бол онилуурыг ашигла)",
+			"M       AGM-65 Maverick пуужин  (T бай солих / камер авто)",
+			"X       хуурамч бай",
+			"Z       агаарын / дугуйн тоормос (асаах/унтраах)",
+			"V       онилох камер (FLIR) асаах / унтраах",
+			"Хулганы баруун товч  дарж чирэх: камер чиглүүлэх, дугуй: томруулах, суллах: бай сонгох",
+			"G       буух дугуй  (зэвсэглэхийн тулд зурвас дээр буу)",
+			"Дугуй / +/-  томруулах    P түр зогсоох   R дахин эхлэх   H тусламж",
 		};
-		const float w = 410f;
+		const float w = 640f;
 		float x = Size.X - w - 16f;
 		float y = Size.Y - 24f * lines.Length - 24f;
 		DrawRect(new Rect2(x - 10, y - 22, w + 10, 24f * lines.Length + 14), new Color(0, 0, 0, 0.35f));
@@ -533,10 +532,10 @@ public partial class Hud : Control
 	void DrawEnd()
 	{
 		DrawRect(new Rect2(Vector2.Zero, Size), new Color(0, 0, 0, Mathf.Clamp(Main.StateTime * 0.3f, 0f, 0.45f)));
-		const string title = "AIRCRAFT LOST";
+		const string title = "ОНГОЦ УНАЛАА";
 		var c = new Vector2(Size.X * 0.5f, Size.Y * 0.4f);
 		CTxt(c, title, 44, CWarn);
-		CTxt(c + new Vector2(0, 50), $"Score {Main.Score}    Waves survived {Mathf.Max(Main.Wave - 1, 0)}    Kills {Main.Kills}", 20, CHud);
-		CTxt(c + new Vector2(0, 90), "R fly again    ENTER main menu", 20, CAmber);
+		CTxt(c + new Vector2(0, 50), $"Оноо {Main.Score}    Даван туулсан довтолгоо {Mathf.Max(Main.Wave - 1, 0)}    Устгасан {Main.Kills}", 20, CHud);
+		CTxt(c + new Vector2(0, 90), "R дахин нисэх    ENTER үндсэн цэс", 20, CAmber);
 	}
 }

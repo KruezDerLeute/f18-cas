@@ -15,7 +15,7 @@ public partial class Cutscene : Control
 	public string Title = "";
 	public string Info = "";
 	public string Body = "";
-	public string ContinueText = "CONTINUE";
+	public string ContinueText = "ҮРГЭЛЖЛҮҮЛЭХ";
 	public Color TitleColor = CHud;
 	/// Called when the player continues past the scene.
 	public Action OnDone;
@@ -78,7 +78,7 @@ public partial class Cutscene : Control
 			_body.VisibleCharacters = Mathf.Min((int)_typed, total);
 		}
 		bool done = Finished();
-		_prompt.Text = "SPACE / ENTER / CLICK  -  " + (done ? ContinueText : "SKIP");
+		_prompt.Text = "SPACE / ENTER / ТОВШИХ  -  " + (done ? ContinueText : "АЛГАСАХ");
 		_prompt.Modulate = new Color(1, 1, 1, done ? 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(_blink * 3f)) : 0.6f);
 	}
 
