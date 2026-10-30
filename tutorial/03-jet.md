@@ -245,4 +245,99 @@ Otherwise you crash, with the reason shown on screen. Stop on the runway for 4 s
 - it shows damage smoke;
 - it hides the bombs and Mavericks you've used.
 
+### The vapour cone and sonic boom: `Transonic()`
+
+When you break Mach 1, a white cone flashes around the jet, the camera shakes, and you hear a boom.
+
+In real life these are two different things:
+- **The vapour cone:** near the speed of sound, the air pressure around the jet drops so sharply that the moisture in it condenses into a cloud.
+- **The sonic boom:** a sound shockwave.
+
+The game shows both at the same moment.
+
+**The cone's shape** is built once in `_Ready()`: 3000 random points on the surface of a cone around the wings.
+
+```csharp
+float t = Mathf.Sqrt(GD.Randf());
+float r = Mathf.Lerp(1.8f, 7.5f, t);
+float a = GD.Randf() * Mathf.Tau;
+conePts[i] = new Vector3(Mathf.Lerp(1.5f, -5.5f, t), -0.4f + Mathf.Cos(a) * r, Mathf.Sin(a) * r);
+```
+
+- **`t`** is the position along the cone's height, as a fraction: `0` is the narrow front, `1` the wide back.
+- **`Mathf.Lerp(a, b, t)`** means "go `t` of the way from `a` to `b`", and turns that fraction into real sizes:
+  - The cone runs from 1.5 m ahead of the jet's centre to 5.5 m behind it, so it's **7 m long**.
+  - Its radius grows from 1.8 m to 7.5 m. It's a truncated cone, like a lampshade, because it has to wrap around the jet's body.
+- **`a`** is a random angle around the jet. `Cos(a) * r` and `Sin(a) * r` turn the angle and radius into a point on a circle.
+- **`Mathf.Sqrt(GD.Randf())`** pushes more points towards the wide end. The wide end has more surface, so it needs more points to look evenly filled.
+
+`_shockCone` is a particle emitter that spawns short-lived smoke puffs (`Lifetime = 0.22`) at those points:
+- the puffs drift backwards, so the cone shimmers instead of looking solid;
+- `LocalCoords = true` keeps the cone moving with the jet, instead of smearing behind it;
+- it's a child of `Roll`, so it rolls when you flip.
+
+**Every frame**, `Transonic(dt)` runs in two halves.
+
+*First half: draw the cone.*
+
+```csharp
+_coneFlash = Mathf.Max(_coneFlash - dt, 0f);
+float flash = _coneFlash / ConeFlashTime;
+float humid = Mathf.Clamp(1f - Pos.Y / 9000f, 0.25f, 1f);
+float s = flash * flash * humid * Fx.Rand(0.85f, 1.05f);
+_shockCone.Emitting = s > 0.01f;
+_shockCone.Color = new Color(1, 1, 1, Mathf.Min(s * 1.3f, 1f));
+_shockCone.Scale = new Vector3(1f + (Mach - 0.95f), 1f, 1f);
+```
+
+| Line | What it does |
+|---|---|
+| `_coneFlash - dt` | Counts the cone timer down by the frame time. `Max(..., 0)` stops it at zero. |
+| `flash` | Turns the timer into a fraction: `1` just after breaking Mach 1, `0` when done. |
+| `humid` | Air humidity by height: `1` at ground level, falling with altitude, never below `0.25`. The cone is thicker in low, damp air. |
+| `s` | The cone's strength this frame. `flash * flash` makes it fade fast at first, then slowly (25% at half time); `Fx.Rand` adds a slight flicker. |
+| `Emitting` | Stops spawning puffs once the strength is basically zero. |
+| `Color` | White, with the strength as **alpha** (opacity: `0` invisible, `1` solid). |
+| `Scale` | Stretches the cone along the jet the faster you go: 5% longer at Mach 1.0, 55% at Mach 1.5. |
+
+*Second half: did we just break the sound barrier?*
+
+```csharp
+if (!_supersonic && Mach >= 1f)
+{
+    _supersonic = true;
+    _coneFlash = ConeFlashTime;
+    SonicBoom();
+}
+else if (_supersonic && Mach < 0.97f)
+    _supersonic = false;
+```
+
+- **"If we weren't supersonic, and now we're at Mach 1 or faster":**
+  1. remember that we're supersonic;
+  2. start the cone timer at `ConeFlashTime` (3.6 s);
+  3. call `SonicBoom()`, which plays the boom, shakes the camera, leaves a puff of smoke in the air, and shows the "MACH 1" message.
+- **"If we were supersonic, and we've slowed below Mach 0.97":** forget it, so the next pass through Mach 1 booms again.
+
+The reset is at **0.97**, not 1.0, on purpose. This gap is called **hysteresis**. Without it, flying at exactly Mach 1 would make the speed flicker 0.999 → 1.001 → 0.999… and boom many times a second. A thermostat uses the same trick.
+
+**Example timeline:**
+
+| Time | Mach | What happens |
+|---|---|---|
+| 0.0 s | 0.98 | timer is 0, so no cone |
+| 0.5 s | **1.00** | boom; timer set to 3.6 s; cone at full strength |
+| 1.4 s | 1.05 | `flash` = 0.75, so strength is 0.56: clearly visible |
+| 2.3 s | 1.08 | `flash` = 0.5, so strength is 0.25: fading |
+| 4.1 s | 1.10 | timer is 0: cone gone; still supersonic, so no new boom |
+| 6.0 s | 0.96 | below 0.97, so `_supersonic` resets |
+| 7.0 s | **1.00** | a new boom and a new cone |
+
+**In short:** the second half starts a 3.6-second timer when you break Mach 1, and the first half uses that timer every frame to draw a cone that fades out.
+
+**Try it:**
+- **Longer cone:** change `-5.5f` in the shape code to `-9f`.
+- **Shorter flash:** lower `ConeFlashTime`.
+- **Performance:** if the game stutters at Mach 1 on a slower computer, lower `Amount = 15000` on `_shockCone` to `5000`. The puffs are so short-lived it looks almost the same.
+
 Next: [Chapter 4: Ground vehicles](04-units.md)

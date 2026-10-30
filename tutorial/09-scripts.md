@@ -500,6 +500,15 @@ Copies the simulation onto the scene: `Position` and `Rotation` of the root (pit
 - **smoke:** below 55 HP, and darker below 30;
 - **stores:** `_bombVis[i].Visible = i < Bombs` shows exactly as many bombs as you have left.
 
+### `Transonic()` and `SonicBoom()`
+
+The vapour cone and sonic boom when you break Mach 1:
+- a 3.6 s timer (`_coneFlash`) starts on crossing Mach 1;
+- every frame, the timer sets the cone's opacity, with a squared fade and thicker cones in low, damp air;
+- a `_supersonic` flag with **hysteresis** means there's one boom per crossing: it triggers at Mach 1.0 and resets below 0.97.
+
+Explained line by line, with a timeline, in [chapter 3](03-jet.md#the-vapour-cone-and-sonic-boom-transonic).
+
 ---
 
 ## 9.7 `Unit.cs`: ground vehicles
