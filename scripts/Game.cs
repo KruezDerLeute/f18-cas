@@ -47,13 +47,16 @@ public partial class Game : Node3D
             u.Init(this, u.Position.X, u.Position.Z);
             Units.Add(u);
         }
+
         FriendlyStart = CountTeam(0);
         Jet = GetNode<Jet>("Jet");
         Jet.Init(this);
         Camera = GetNode<Camera3D>("Camera");
+
         _baseFov = Camera.Fov;
         Camera.SetCullMaskValue(Flir.HotLayer, false);
         Flir = new Flir { Main = this };
+
         AddChild(Flir);
         _hud = GetNode<Hud>("HudLayer/Hud");
         _hud.Main = this;
@@ -103,13 +106,24 @@ public partial class Game : Node3D
     void ShowBriefing()
     {
         _menuX0 = FriendlyLine - 500f;
+        // Each difficulty can have its own recording, with its own camera cut time and subtitle times.
+        var voiceStream = BriefingVoice;
+        float shotTime = BriefingJetShotTime;
+        var times = BriefingSubtitleTimes;
+        if (Settings.Difficulty == Difficulty.Normal && BriefingVoiceNormal != null)
+        {
+            voiceStream = BriefingVoiceNormal;
+            shotTime = BriefingJetShotTimeNormal;
+            times = BriefingSubtitleTimesNormal;
+        }
         var briefing = new Cutscene
         {
             Header = "ДААЛГАВРЫН ТАНИЛЦУУЛГА",
             Title = "\"ТӨМӨР БАМБАЙ\" АЖИЛЛАГАА",
             Info = $"ДУУДЛАГЫН НЭР: ВАЙПЕР 1        ТҮВШИН: {Settings.DifficultyName}",
-            Body = BriefingText(),
-            ContinueText = "ДААЛГАВАР ЭХЛҮҮЛЭХ",
+            Lines = BriefingLines(),
+            Times = voiceStream != null ? times : null,
+            Voice = voiceStream,
             OnDone = () =>
             {
                 _jetShotAt = -1f;
@@ -126,40 +140,28 @@ public partial class Game : Node3D
             },
         };
         OpenOverlay(briefing);
-
-        // Each difficulty can have its own recording, with its own camera cut time.
-        // The player is a child of the briefing, so it stops when the mission starts.
-        var voiceStream = BriefingVoice;
-        float shotTime = BriefingJetShotTime;
-        if (Settings.Difficulty == Difficulty.Normal && BriefingVoiceNormal != null)
-        {
-            voiceStream = BriefingVoiceNormal;
-            shotTime = BriefingJetShotTimeNormal;
-        }
         if (voiceStream != null)
-        {
-            var voice = new AudioStreamPlayer { Stream = voiceStream };
-            briefing.AddChild(voice);
-            voice.Play();
             _jetShotAt = shotTime;
-        }
     }
 
-    static string BriefingText()
+    static string[] BriefingLines()
     {
         string start = Settings.StartInAir
             ? "Та нисэх буудлын дээгүүр аль хэдийн нисч байна. Фронт руу хүрэхийн тулд БАРУУН тийш нис."
             : "Таны онгоц хөөрөх зурвас дээр байна. Тоормосоо сулла (Z), түлхэлтээ бүрэн нэм (E), тэгээд хөөр.";
-        return
-            "06:00 ЦАГ. Дайсны хуягт хүчин зүүн талын голын хөндийг нэвтэрлээ.\n\n" +
-            "Манай сүүлчийн танкын салаа НОГООН УТААНЫ дэргэд бэхлэлт хийж байна. Тэд ганцаараа " +
-            "тэсэхгүй. Та бол Вайпер 1 - ойр орчимд байгаа цорын ганц онгоц.\n\n" +
-            "Дайсны цувааг манай танкуудад хүрэхээс өмнө устга. Нэмэлт хүч " +
-            $"{MissionWaves} довтолгооны дараа ирнэ: тэд ирэх хүртэл шугамаа барь. Зенитийн буу болон " +
-            "ЗУП (зенитийн удирдлагат пуужин) таныг хүлээж байна: пуужингийн дохио дуугарвал " +
-            "ХУУРАМЧ БАЙ (X) хаяж, огцом эргэ.\n\n" +
-            start + "\n\n" +
-            "Амжилт хүсье, Вайпер 1.";
+        return new[]
+        {
+            "06:00 ЦАГ. Дайсны хуягт хүчин зүүн талын голын хөндийг нэвтэрлээ.",
+            "Манай сүүлчийн танкын салаа НОГООН УТААНЫ дэргэд бэхлэлт хийж байна.",
+            "Тэд ганцаараа тэсэхгүй.",
+            "Та бол Вайпер 1 - ойр орчимд байгаа цорын ганц онгоц.",
+            "Дайсны цувааг манай танкуудад хүрэхээс өмнө устга.",
+            $"Нэмэлт хүч {MissionWaves} довтолгооны дараа ирнэ: тэд ирэх хүртэл шугамаа барь.",
+            "Зенитийн буу болон ЗУП (зенитийн удирдлагат пуужин) таныг байж болзошгүй.",
+            "Пуужингийн дохио дуугарвал ХУУРАМЧ БАЙ (X) хаяж, огцом эргэ.",
+            start,
+            "Амжилт хүсье, Вайпер 1.",
+        };
     }
 
     /// Victory or overrun: an ending cutscene, then the debrief.
@@ -170,25 +172,44 @@ public partial class Game : Node3D
         int saved = CountTeam(0);
         _menuX0 = FriendlyLine - 500f;
         _menuTime = 0f;
-        string body = won
-            ? "Вайпер 1, энэ бол Газрын хяналт. Нэмэлт хүчний цуваа хөндийд хүрлээ. " +
-              "Дайсны хуягт хүчин голын нөгөө эрэг рүү ухарч байна.\n\n" +
-              (saved == FriendlyStart
-                  ? "Взводын бүх танк амьд үлдлээ. Нэг ч багийн гишүүн эндсэнгүй."
-                  : $"Взводын {FriendlyStart} танкаас {saved} нь амьд үлдлээ.") + "\n\n" +
-              "Шугам таны ачаар тэслээ. Бааздаа буц. Өнөө орой бидний даалгавар."
-            : "Манай сүүлчийн танк чимээгүй боллоо. Дайсны хуягт хүчин нээгдсэн цоорхойгоор " +
-              "нисэх буудал руу давшиж байна.\n\n" +
-              "\"Вайпер 1, энэ бол Командлал. Бид хөндийг алдлаа. Тулалдаанаас гарч бааздаа буц. " +
-              "Бид эргэж ирнэ.\"";
+        // The recording says every tank made it, so only play it on a perfect run.
+        bool perfect = saved == FriendlyStart;
+        var voiceStream = won && perfect ? VictoryVoice : null;
+        var lines = won
+            ? perfect
+                ? new[]
+                {
+                    "Вайпер 1, Газрын хяналт байна.",
+                    "Нэмэлт хүчний цуваа хөндийд хүрлээ.",
+                    "Дайсны хуягт хүчин голын нөгөө эрэг рүү ухарч байна.",
+                    "Салаа танкны бүх бие бүрэлдэхүүн амьд гарлаа.",
+                    "Нэг ч багийн гишүүн эндсэнгүй.",
+                    "Шугам таны ачаар тэслээ.",
+                    "Энд байгаа залуус таны тухай түүх ярих болно.",
+                    "Бааздаа буц.",
+                    "Өнөө орой бид таныг уух юмаар дайлъя.",
+                }
+                : new[]
+                {
+                    ""
+                }
+            : new[]
+            {
+                "Манай сүүлчийн танк чимээгүй боллоо.",
+                "Дайсны хуягт хүчин нээгдсэн цоорхойгоор нисэх буудал руу давшиж байна.",
+                "Вайпер 1, энэ бол Командлал. Бид хөндийг алдлаа.",
+                "Тулалдаанаас гарч бааздаа буц.",
+                "Бид эргэж ирнэ.",
+            };
         var ending = new Cutscene
         {
             Header = won ? "ДААЛГАВАР БИЕЛЛЭЭ" : "ДААЛГАВАР БҮТЭЛГҮЙТЛЭЭ",
             Title = won ? "ШУГАМ ТЭСЛЭЭ" : "БАЙРЛАЛ ЭЗЛЭГДЛЭЭ",
             TitleColor = won ? new Color(0.35f, 1.0f, 0.45f) : new Color(1.0f, 0.3f, 0.2f),
             Info = "\"ТӨМӨР БАМБАЙ\" АЖИЛЛАГАА",
-            Body = body,
-            ContinueText = "ДҮГНЭЛТ",
+            Lines = lines,
+            Times = voiceStream != null ? VictorySubtitleTimes : null,
+            Voice = voiceStream,
             OnDone = () =>
             {
                 _menuLayer.QueueFree();
@@ -204,14 +225,6 @@ public partial class Game : Node3D
         OpenOverlay(ending);
         if (won)
             SpawnConvoy();
-
-        // The recording says every tank made it, so only play it on a perfect run.
-        if (won && saved == FriendlyStart && VictoryVoice != null)
-        {
-            var voice = new AudioStreamPlayer { Stream = VictoryVoice };
-            ending.AddChild(voice);
-            voice.Play();
-        }
     }
 
     void EndMission(GameState outcome)

@@ -1,19 +1,19 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://d3j4icmy15cta"]
 
 [ext_resource type="Script" uid="uid://c2bu5ubgicpuf" path="res://scripts/Menu.cs" id="1_menu"]
 [ext_resource type="AudioStream" uid="uid://lw6irpvxqvf0" path="res://assets/sounds/menu_sound.ogg" id="2_music"]
 
-[sub_resource type="StyleBoxFlat" id="Panel"]
-content_margin_left = 28.0
-content_margin_top = 28.0
-content_margin_right = 28.0
-content_margin_bottom = 28.0
-bg_color = Color(0.02, 0.06, 0.03, 0.85)
+[sub_resource type="StyleBoxFlat" id="ButtonHover"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.35, 1, 0.45, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.35, 1, 0.45, 0.6)
+border_color = Color(0.35, 1, 0.45, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
@@ -35,22 +35,6 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
-[sub_resource type="StyleBoxFlat" id="ButtonHover"]
-content_margin_left = 8.0
-content_margin_top = 8.0
-content_margin_right = 8.0
-content_margin_bottom = 8.0
-bg_color = Color(0.35, 1, 0.45, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.35, 1, 0.45, 1)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
-
 [sub_resource type="StyleBoxFlat" id="ButtonPressed"]
 content_margin_left = 8.0
 content_margin_top = 8.0
@@ -62,6 +46,22 @@ border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(1, 0.75, 0.2, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="Panel"]
+content_margin_left = 28.0
+content_margin_top = 28.0
+content_margin_right = 28.0
+content_margin_bottom = 28.0
+bg_color = Color(0.02, 0.06, 0.03, 0.85)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.35, 1, 0.45, 0.6)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
@@ -79,7 +79,7 @@ Button/styles/pressed = SubResource("ButtonPressed")
 Label/colors/font_shadow_color = Color(0, 0, 0, 0.7)
 PanelContainer/styles/panel = SubResource("Panel")
 
-[node name="Menu" type="Control"]
+[node name="Menu" type="Control" unique_id=894874690]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -89,7 +89,7 @@ grow_vertical = 2
 theme = SubResource("MenuTheme")
 script = ExtResource("1_menu")
 
-[node name="Shade" type="ColorRect" parent="."]
+[node name="Shade" type="ColorRect" parent="." unique_id=489903566]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -99,68 +99,59 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 0.25)
 
-[node name="Center" type="CenterContainer" parent="."]
+[node name="Center" type="CenterContainer" parent="." unique_id=1789940697]
 layout_mode = 1
-anchors_preset = 9
+anchors_preset = -1
 anchor_right = 0.5
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Panel" type="PanelContainer" parent="Center"]
+[node name="Panel" type="PanelContainer" parent="Center" unique_id=704663451]
 layout_mode = 2
 
-[node name="Columns" type="HBoxContainer" parent="Center/Panel"]
+[node name="Columns" type="HBoxContainer" parent="Center/Panel" unique_id=1668956254]
 layout_mode = 2
 theme_override_constants/separation = 40
 
-[node name="Main" type="VBoxContainer" parent="Center/Panel/Columns"]
+[node name="Main" type="VBoxContainer" parent="Center/Panel/Columns" unique_id=1644873553]
 custom_minimum_size = Vector2(520, 0)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Title" type="Label" parent="Center/Panel/Columns/Main"]
+[node name="Title" type="Label" parent="Center/Panel/Columns/Main" unique_id=432630077]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 1, 0.45, 1)
 theme_override_font_sizes/font_size = 64
 text = "F/A-18"
 horizontal_alignment = 1
 
-[node name="Subtitle" type="Label" parent="Center/Panel/Columns/Main"]
+[node name="Subtitle" type="Label" parent="Center/Panel/Columns/Main" unique_id=769922345]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 1, 0.45, 1)
 theme_override_font_sizes/font_size = 30
 text = "ОЙРЫН АГААРЫН ДЭМЖЛЭГ"
 horizontal_alignment = 1
 
-[node name="Briefing" type="Label" parent="Center/Panel/Columns/Main"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 17
-text = "Дайсны танк, ачааны машин, зенит БАРУУН талаас давшиж байна.
-НОГООН УТААНЫ дэргэдэх манай танкуудыг хамгаал.
-Нэмэлт хүч ирэх хүртэл довтолгоонуудыг няцаа."
-horizontal_alignment = 1
-
-[node name="Spacer" type="Control" parent="Center/Panel/Columns/Main"]
+[node name="Spacer" type="Control" parent="Center/Panel/Columns/Main" unique_id=734801785]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 
-[node name="ChooseDifficulty" type="Label" parent="Center/Panel/Columns/Main"]
+[node name="ChooseDifficulty" type="Label" parent="Center/Panel/Columns/Main" unique_id=158677457]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.75, 0.2, 1)
 theme_override_font_sizes/font_size = 18
 text = "ТҮВШНЭЭ СОНГО"
 horizontal_alignment = 1
 
-[node name="Easy" type="Button" parent="Center/Panel/Columns/Main"]
+[node name="Easy" type="Button" parent="Center/Panel/Columns/Main" unique_id=1444549590]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "ХЯЛБАР"
 
-[node name="EasyInfo" type="Label" parent="Center/Panel/Columns/Main"]
+[node name="EasyInfo" type="Label" parent="Center/Panel/Columns/Main" unique_id=1611849763]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 1, 0.45, 0.6)
 theme_override_font_sizes/font_size = 13
@@ -168,14 +159,14 @@ text = "Агаарт эхэлнэ, даац алдахгүй, газарт ой�
 түлш дуусахгүй, довтолгоо бүрийн дараа үнэгүй цэнэглэнэ, ЗУП цөөн."
 horizontal_alignment = 1
 
-[node name="Normal" type="Button" parent="Center/Panel/Columns/Main"]
+[node name="Normal" type="Button" parent="Center/Panel/Columns/Main" unique_id=742122805]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "ДУНД"
 
-[node name="NormalInfo" type="Label" parent="Center/Panel/Columns/Main"]
+[node name="NormalInfo" type="Label" parent="Center/Panel/Columns/Main" unique_id=1600070854]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 1, 0.45, 0.6)
 theme_override_font_sizes/font_size = 13
@@ -183,14 +174,14 @@ text = "Агаарт эхэлнэ, даац алдахгүй, бага гэмт�
 Зэвсэглэхийн тулд зурвас дээр буух хэрэгтэй."
 horizontal_alignment = 1
 
-[node name="Realistic" type="Button" parent="Center/Panel/Columns/Main"]
+[node name="Realistic" type="Button" parent="Center/Panel/Columns/Main" unique_id=1183056828]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "БОДИТ"
 
-[node name="RealisticInfo" type="Label" parent="Center/Panel/Columns/Main"]
+[node name="RealisticInfo" type="Label" parent="Center/Panel/Columns/Main" unique_id=1975597138]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 1, 0.45, 0.6)
 theme_override_font_sizes/font_size = 13
@@ -198,15 +189,15 @@ text = "Бүрэн нислэгийн загвар: зурвасаас хөөр�
 даац, түлш, газардалтаа өөрөө зохицуулна."
 horizontal_alignment = 1
 
-[node name="Spacer2" type="Control" parent="Center/Panel/Columns/Main"]
+[node name="Spacer2" type="Control" parent="Center/Panel/Columns/Main" unique_id=510396757]
 custom_minimum_size = Vector2(0, 6)
 layout_mode = 2
 
-[node name="Row" type="HBoxContainer" parent="Center/Panel/Columns/Main"]
+[node name="Row" type="HBoxContainer" parent="Center/Panel/Columns/Main" unique_id=1010923749]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="ControlsButton" type="Button" parent="Center/Panel/Columns/Main/Row"]
+[node name="ControlsButton" type="Button" parent="Center/Panel/Columns/Main/Row" unique_id=855781197]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
@@ -214,7 +205,7 @@ size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 16
 text = "УДИРДЛАГА"
 
-[node name="Quit" type="Button" parent="Center/Panel/Columns/Main/Row"]
+[node name="Quit" type="Button" parent="Center/Panel/Columns/Main/Row" unique_id=83208185]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
@@ -222,7 +213,7 @@ size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 16
 text = "ГАРАХ"
 
-[node name="Controls" type="Label" parent="Center/Panel/Columns"]
+[node name="Controls" type="Label" parent="Center/Panel/Columns" unique_id=770337912]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -249,7 +240,7 @@ H            тусламж харуулах / нуух
 ЗӨВЛӨГӨӨ: пуужингийн дохио дуугарвал
 X дарж хуурамч бай хаяад огцом эргэ."
 
-[node name="Music" type="AudioStreamPlayer" parent="."]
+[node name="Music" type="AudioStreamPlayer" parent="." unique_id=1704834159]
 unique_name_in_owner = true
 stream = ExtResource("2_music")
 volume_db = -6.0

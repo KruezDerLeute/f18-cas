@@ -34,13 +34,18 @@ public partial class Game : Node3D
     [Export] public AudioStream BriefingVoice;
     /// Seconds into BriefingVoice where it says "You are Viper 1": the camera cuts to the jet.
     [Export] public float BriefingJetShotTime = 15.6f;
+    /// Seconds into BriefingVoice where each subtitle line starts (one per line in BriefingLines).
+    [Export] public float[] BriefingSubtitleTimes = { 0.2f, 10.55f, 13.7f, 15.7f, 19.35f, 23.5f, 27.7f, 31.15f, 35.35f, 39.35f };
 
     /// Briefing voice for Normal mode (falls back to BriefingVoice if empty).
     [Export] public AudioStream BriefingVoiceNormal;
     [Export] public float BriefingJetShotTimeNormal = 12.1f;
+    [Export] public float[] BriefingSubtitleTimesNormal = { 0.2f, 7.4f, 10.2f, 12.15f, 15.75f, 20.8f, 28.25f, 31.7f, 36.3f, 39.5f };
 
     /// Ground's radio call over the victory ending (it says every tank made it).
     [Export] public AudioStream VictoryVoice;
+    /// Seconds into VictoryVoice where each subtitle line starts.
+    [Export] public float[] VictorySubtitleTimes = { 0.2f, 2.2f, 4.85f, 7.7f, 9.9f, 11.7f, 13.7f, 15.95f, 16.9f };
 
     /// X of the friendly front line; read from the "FriendlyLine" marker in world.tscn.
     public float FriendlyLine = 3800f;
