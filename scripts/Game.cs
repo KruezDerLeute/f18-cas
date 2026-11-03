@@ -156,7 +156,7 @@ public partial class Game : Node3D
             "Тэд ганцаараа тэсэхгүй.",
             "Та бол Вайпер 1 - ойр орчимд байгаа цорын ганц онгоц.",
             "Дайсны цувааг манай танкуудад хүрэхээс өмнө устга.",
-            $"Нэмэлт хүч {MissionWaves} довтолгооны дараа ирнэ: тэд ирэх хүртэл шугамаа барь.",
+            $"Нэмэлт хүч {MissionWaves} довтолгооны дараа ирнэ: тэд ирэх хүртэл шугамыг барь.",
             "Зенитийн буу болон ЗУП (зенитийн удирдлагат пуужин) таныг байж болзошгүй.",
             "Пуужингийн дохио дуугарвал ХУУРАМЧ БАЙ (X) хаяж, огцом эргэ.",
             start,
@@ -321,6 +321,8 @@ public partial class Game : Node3D
         var p = new Vector3(Jet.Pos.X, Jet.Pos.Y, 0f);
         var sway = new Vector3(0f, Mathf.Sin(_menuTime * 1.3f) * 0.6f, Mathf.Sin(_menuTime * 0.8f) * 1.2f);
         var shake = new Vector3(Fx.Rand(-1, 1), Fx.Rand(-1, 1), 0) * 0.06f;
+        if (Jet.OnGround)
+            sway = shake = Vector3.Zero;
         if (_briefShot)
         {
             UpdateBriefShot(p, sway + shake);
@@ -343,7 +345,7 @@ public partial class Game : Node3D
         Camera.Position = jet + dir * dist + new Vector3(0f, 4f, 0f) + wobble;
         // The camera's right; aiming left of the jet pushes it to the right on screen.
         var right = new Vector3(dir.Z, 0f, -dir.X);
-        Camera.LookAt(jet - right * 9f + new Vector3(0f, 1f, 0f), Vector3.Up);
+        Camera.LookAt(jet - right + new Vector3(0f, 1f, 0f), Vector3.Up);
     }
 
     void BackToMenu()
