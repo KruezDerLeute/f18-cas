@@ -12,7 +12,7 @@ public partial class Game : Node3D
     const int MaxDebris = 140;
     const int MaxScorch = 60;
     /// Waves to clear for the reinforcements to arrive and the mission to be won.
-    public const int MissionWaves = 1;   // TEMP: testing the ending. Set back to 3.
+    public const int MissionWaves = 3;   // TEMP: testing the ending. Set back to 3.
 
     [ExportGroup("Units")]
     [Export] public PackedScene TankScene;
