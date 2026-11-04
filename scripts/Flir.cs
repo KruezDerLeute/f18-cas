@@ -59,6 +59,12 @@ void fragment() {
     Vector3 _spot;              // hand-aimed ground point
     float _manualWidth = 400f;
 
+    public void HoldView()
+    {
+        Manual = true;
+        _manualWidth = _width;
+    }
+
     public override void _Ready()
     {
         // A SubViewport without its own world renders the game's world.

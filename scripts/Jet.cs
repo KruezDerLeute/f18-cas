@@ -269,6 +269,12 @@ public partial class Jet : Node3D, ITarget
             Throttle = Mathf.Min(Throttle + dt * 0.5f, 1.25f);
         if (Input.IsActionPressed("throttle_down"))
             Throttle = Mathf.Max(Throttle - dt * 0.5f, 0f);
+        // One press pushes through to full afterburner, the next comes back to 100%.
+        if (Input.IsActionJustPressed("afterburner"))
+        {
+            Throttle = Throttle > 1f ? 1f : 1.25f;
+            Main.Msg("НЭМЭЛТ ШАТАЛТ " + (Throttle > 1f ? "АСЛАА" : "УНТАРЛАА"), new Color(0.6f, 0.9f, 1.0f), 2f);
+        }
         if (Input.IsActionJustPressed("airbrake"))
         {
             Airbrake = !Airbrake;
@@ -280,16 +286,6 @@ public partial class Jet : Node3D, ITarget
         {
             GearDown = !GearDown;
             Main.Msg("ДУГУЙ " + (GearDown ? "БУУЛГАЛАА" : "ХУРААЛАА"), new Color(0.6f, 0.9f, 1.0f), 2f);
-        }
-        if (Settings.StallProtection && !OnGround && !GearDown && Vel.Length() < 110f && Fuel > 0f)
-            Throttle = Mathf.Max(Throttle, 1.25f);
-        // Auto-GCAS: about to fly into the ground (and not landing), so roll
-        // upright and pull up, like the real system in modern fighters.
-        if (Settings.AutoGcas && !GearDown && Main.PullUpWarning())
-        {
-            if (Mathf.Cos(_phiTarget) < 0f)
-                _phiTarget += Mathf.Pi;
-            _stick = UpSign();
         }
         _phi = Mathf.MoveToward(_phi, _phiTarget, dt * 3.8f);
         if (_phi == _phiTarget && _phi >= Mathf.Tau)

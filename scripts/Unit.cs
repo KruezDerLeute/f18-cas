@@ -287,7 +287,7 @@ public partial class Unit : Node3D, ITarget
         Alive = false;
         // The pod stays on the wreck instead of jumping to the next target.
         if (Main.Jet.LockTarget == this)
-            Main.Flir.Manual = true;
+            Main.Flir.HoldView();
         foreach (var p in _parts)
             p.MaterialOverride = Main.CharredMat;
         foreach (var h in _heat)

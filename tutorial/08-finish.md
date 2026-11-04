@@ -9,6 +9,7 @@
 | **W / S** (or ↑ / ↓) | pull / push, relative to the canopy |
 | **F** | half-roll: upright ↔ inverted |
 | **E / Q** (or Shift / Ctrl) | throttle up / down; past the red mark = afterburner |
+| **C** | afterburner on (full) / off (back to 100%) |
 | **Space** | cannon |
 | **B** | drop a bomb |
 | **M** | fire a Maverick at the locked target |

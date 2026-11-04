@@ -11,6 +11,7 @@ public partial class Game : Node3D
             ["pitch_down"] = new[] { Key.S, Key.Down },
             ["throttle_up"] = new[] { Key.Shift, Key.E },
             ["throttle_down"] = new[] { Key.Ctrl, Key.Q },
+            ["afterburner"] = new[] { Key.C },
             ["fire_gun"] = new[] { Key.Space },
             ["drop_bomb"] = new[] { Key.B },
             ["fire_missile"] = new[] { Key.M },

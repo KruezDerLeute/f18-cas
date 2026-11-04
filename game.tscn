@@ -15,7 +15,7 @@
 [ext_resource type="Script" uid="uid://te7evf4ltli1" path="res://scripts/Audio.cs" id="14_audio"]
 [ext_resource type="Script" uid="uid://bbedxdrmiq22g" path="res://scripts/Hud.cs" id="15_hud"]
 [ext_resource type="PackedScene" path="res://scenes/units/m1a2.tscn" id="16_m1a2"]
-[ext_resource type="PackedScene" path="res://scenes/menu.tscn" id="17_menu"]
+[ext_resource type="PackedScene" uid="uid://d3j4icmy15cta" path="res://scenes/menu.tscn" id="17_menu"]
 [ext_resource type="AudioStream" uid="uid://dmug0dynqwv55" path="res://assets/sounds/awacs_mission_brief.ogg" id="18_brief"]
 [ext_resource type="AudioStream" uid="uid://du3xpdcmgyxit" path="res://assets/sounds/awacs_ending.ogg" id="19_victory"]
 [ext_resource type="AudioStream" uid="uid://c7bwh2b5chv1e" path="res://assets/sounds/awacs_brief_normal.ogg" id="20_brief_normal"]

@@ -275,7 +275,11 @@ public partial class Game : Node3D
     /// line just behind the friendly platoon.
     void SpawnConvoy()
     {
-        var scenes = new[] { FriendlyTankScene, FriendlyTankScene, TruckScene, FriendlyTankScene, TruckScene, FriendlyTankScene };
+        const int friendly_units = 30;
+        var scenes = new PackedScene[friendly_units];
+        for (int i = 0; i < friendly_units; i++)
+            scenes[i] = i % 3 == 2 ? TruckScene : TankScene;
+
         const float gap = 28f;
         // The lead vehicle stops a little behind the westernmost friendly tank.
         float firstStop = Units.Where(u => u.Team == 0).Select(u => u.X).DefaultIfEmpty(FriendlyLine).Min() - 35f;
@@ -305,9 +309,9 @@ public partial class Game : Node3D
             if (s > 0.05f)
                 _convoy[i].Drive(dt, s);
         }
-        float x = _convoy[0].X - 45f;
-        Camera.Position = new Vector3(x, Terrain.Height(x) + 14f, 70f);
-        Camera.LookAt(new Vector3(x + 35f, Terrain.Height(x + 35f) + 2f, 0f), Vector3.Up);
+        float x = _convoy[0].X - 200f;
+        Camera.Position = new Vector3(x, Terrain.Height(x) + 60f, 260f);
+        Camera.LookAt(new Vector3(x, Terrain.Height(x), 0f), Vector3.Up);
     }
 
     /// Close behind the afterburners. The camera sits a little to the jet's
