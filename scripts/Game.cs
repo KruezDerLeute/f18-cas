@@ -21,6 +21,7 @@ public partial class Game : Node3D
 
     public override void _Ready()
     {
+        // 1. Set up the keys and shared resources.
         GD.Randomize();
         SetupInput();
         BuildResources();
@@ -30,6 +31,7 @@ public partial class Game : Node3D
         Audio = GetNode<Audio>("Audio");
         Audio.Main = this;
 
+        // 2. Build the terrain and scenery.
         Terrain = (Terrain)FindChild("Terrain", true, false);
         Terrain.Build();
         (FindChild("Foreground", true, false) as Foreground)?.Build(Terrain);
@@ -41,16 +43,19 @@ public partial class Game : Node3D
         PlaceGroundProps();
         AddFriendlySmoke();
 
+        // 3. Find the friendly tanks and start up the jet.
         _unitsNode = GetNode<Node3D>("Units");
         foreach (var u in _unitsNode.GetChildren().OfType<Unit>())
         {
-            u.Init(this, u.Position.X, u.Position.Z);
+            u.Init(this, u.Position.X, u.Position.Z); // settings up every Unit's position.
             Units.Add(u);
         }
 
         FriendlyStart = CountTeam(0);
         Jet = GetNode<Jet>("Jet");
         Jet.Init(this);
+
+        // 4. Create the thermal camera and connect the HUD.
         Camera = GetNode<Camera3D>("Camera");
 
         _baseFov = Camera.Fov;
@@ -61,6 +66,7 @@ public partial class Game : Node3D
         _hud = GetNode<Hud>("HudLayer/Hud");
         _hud.Main = this;
 
+        // 5. Choose what comes next: the menu, the briefing, or straight into the mission.
         if (!Settings.SkipMenu)
         {
             ShowMenu();
@@ -372,6 +378,7 @@ public partial class Game : Node3D
             ShowEnding();
             return;
         }
+
         if (Input.IsActionJustPressed("main_menu") && (Paused || State != GameState.Play))
         {
             BackToMenu();
@@ -382,6 +389,7 @@ public partial class Game : Node3D
             GetTree().ReloadCurrentScene();
             return;
         }
+
         if (Input.IsActionJustPressed("pause"))
             Paused = !Paused;
         if (Input.IsActionJustPressed("help"))

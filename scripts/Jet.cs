@@ -81,7 +81,7 @@ public partial class Jet : Node3D, ITarget
     public float LockTime;
     /// True while the targeting pod's laser is on a tracked target (guides bombs).
     public bool Lasing => Alive && LockTarget != null && IsInstanceValid(LockTarget) && LockTarget.Alive
-            && LockTime > 0.8f && Main.Flir.On;
+        && LockTime > 0.8f && Main.Flir.On;
     public float RearmTimer;
     public float RwrLock;
     public Vector2? Ccip;
@@ -136,7 +136,6 @@ public partial class Jet : Node3D, ITarget
     public Vector2 TargetPos => Pos;
     public Vector2 TargetVel => Vel;
     public bool IsTargetValid() => Alive;
-
 
     /// Finds the parts placed in jet.tscn and adds the particle effects at the markers.
     void FindParts()
@@ -350,10 +349,13 @@ public partial class Jet : Node3D, ITarget
                 cmdB = Mathf.Lerp(trimB, -aNeg, -_stick);
             aCmd = cmdB * us;
         }
+
         float qn = Mathf.Clamp(qbar / 22000f, 0.02f, 2.5f);
         float w = 5.5f * Mathf.Sqrt(qn);
         float gammaDot = Mathf.Clamp(Mathf.Wrap(gamma - _gammaPrev, -Mathf.Pi, Mathf.Pi) / h, -3f, 3f);
+
         _gammaPrev = gamma;
+
         float thetaAcc = w * w * Mathf.Wrap(aCmd - Alpha, -Mathf.Pi, Mathf.Pi) - 2f * 0.85f * w * (_thetaDot - gammaDot);
         _thetaDot = Mathf.Clamp(_thetaDot + thetaAcc * h, -1.6f, 1.6f);
         Theta += _thetaDot * h;

@@ -103,6 +103,9 @@ public partial class Terrain : Node3D
 
             var xf = mi.GlobalTransform;
             var faces = mi.Mesh.GetFaces();
+            // GetFaces() returns one long list of corner points, where every 3 points make one triangle:
+            // [a, b, c,  a, b, c,  a, b, c, ...]
+            //  triangle  triangle  triangle
             for (int t = 0; t + 2 < faces.Length; t += 3)
             {
                 var a = xf * faces[t];
